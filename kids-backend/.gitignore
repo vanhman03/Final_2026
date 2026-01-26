@@ -1,0 +1,29 @@
+# Supabase
+.branches
+.temp
+.env
+.env.local
+
+# Deno
+.deno/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+
+# Node modules (if any)
+node_modules/
+
+# Build outputs
+dist/
+build/

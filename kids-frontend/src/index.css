@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Child-friendly color palette */
+    --background: 210 50% 98%;
+    --foreground: 230 25% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 25% 18%;
+
+    /* Primary - Playful Blue */
+    --primary: 200 90% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 200 90% 70%;
+    --primary-dark: 200 90% 40%;
+
+    /* Secondary - Sunny Orange */
+    --secondary: 35 95% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 35 95% 70%;
+
+    /* Accent - Playful Pink */
+    --accent: 330 85% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Success - Friendly Green */
+    --success: 145 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 145 70% 90%;
+
+    /* Warning - Warm Yellow */
+    --warning: 45 100% 55%;
+    --warning-foreground: 230 25% 18%;
+
+    /* Muted tones */
+    --muted: 210 30% 95%;
+    --muted-foreground: 215 16% 47%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 30% 88%;
+    --input: 210 30% 88%;
+    --ring: 200 90% 50%;
+
+    --radius: 1rem;
+
+    /* Custom gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(200, 90%, 50%) 0%, hsl(260, 85%, 60%) 50%, hsl(330, 85%, 65%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(210, 50%, 98%) 100%);
+    --gradient-fun: linear-gradient(135deg, hsl(35, 95%, 55%) 0%, hsl(330, 85%, 65%) 100%);
+    --gradient-sky: linear-gradient(180deg, hsl(200, 90%, 70%) 0%, hsl(200, 90%, 50%) 100%);
+    --gradient-nature: linear-gradient(135deg, hsl(145, 70%, 45%) 0%, hsl(180, 70%, 45%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(35, 95%, 55%) 0%, hsl(0, 85%, 60%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(230 25% 18% / 0.1);
+    --shadow-card: 0 8px 30px -8px hsl(230 25% 18% / 0.12);
+    --shadow-button: 0 4px 14px -2px hsl(200 90% 50% / 0.4);
+    --shadow-glow: 0 0 30px hsl(200 90% 50% / 0.3);
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 230 25% 18%;
+    --sidebar-primary: 200 90% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 30% 95%;
+    --sidebar-accent-foreground: 230 25% 18%;
+    --sidebar-border: 210 30% 88%;
+    --sidebar-ring: 200 90% 50%;
+  }
+
+  .dark {
+    --background: 230 25% 10%;
+    --foreground: 210 50% 98%;
+
+    --card: 230 25% 14%;
+    --card-foreground: 210 50% 98%;
+
+    --popover: 230 25% 14%;
+    --popover-foreground: 210 50% 98%;
+
+    --primary: 200 90% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 200 90% 65%;
+    --primary-dark: 200 90% 45%;
+
+    --secondary: 35 95% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 330 85% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 145 70% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --muted: 230 20% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 230 20% 22%;
+    --input: 230 20% 22%;
+    --ring: 200 90% 55%;
+
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
+    --shadow-button: 0 4px 14px -2px hsl(200 90% 55% / 0.5);
+
+    --sidebar-background: 230 25% 12%;
+    --sidebar-foreground: 210 50% 98%;
+    --sidebar-primary: 200 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 230 20% 18%;
+    --sidebar-accent-foreground: 210 50% 98%;
+    --sidebar-border: 230 20% 22%;
+    --sidebar-ring: 200 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-nunito antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .text-gradient-hero {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-fun {
+    background: var(--gradient-fun);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-fun {
+    background: var(--gradient-fun);
+  }
+
+  .bg-gradient-sky {
+    background: var(--gradient-sky);
+  }
+
+  .bg-gradient-nature {
+    background: var(--gradient-nature);
+  }
+
+  .bg-gradient-sunset {
+    background: var(--gradient-sunset);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-button {
+    box-shadow: var(--shadow-button);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Fun wobble animation for interactive elements */
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  @keyframes bounce-soft {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(2deg); }
+    75% { transform: translateY(-5px) rotate(-2deg); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px hsl(200 90% 50% / 0.3); }
+    50% { box-shadow: 0 0 40px hsl(200 90% 50% / 0.5); }
+  }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-wobble {
+    animation: wobble 0.5s ease-in-out;
+  }
+
+  .animate-bounce-soft {
+    animation: bounce-soft 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+}
