@@ -7,7 +7,7 @@ import { useAuth, PinVerificationError } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION = 15 * 60 * 1000;
+const LOCKOUT_DURATION = 1 * 60 * 1000;
 
 const getStorageKeys = (userId: string | undefined) => ({
   lockout: userId ? `pin_lockout_until_${userId}` : "pin_lockout_until",
@@ -158,7 +158,7 @@ export function PinModal({
           toast({
             title: "Account Locked",
             description:
-              "Too many failed attempts. Please try again in 15 minutes.",
+              "Too many failed attempts. Please try again in 1 minute.",
             variant: "destructive",
           });
         } else {
@@ -280,9 +280,8 @@ export function PinModal({
                     {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
                       <div
                         key={i}
-                        className={`w-2 h-2 rounded-full ${
-                          i < attempts ? "bg-destructive" : "bg-muted"
-                        }`}
+                        className={`w-2 h-2 rounded-full ${i < attempts ? "bg-destructive" : "bg-muted"
+                          }`}
                       />
                     ))}
                   </div>
