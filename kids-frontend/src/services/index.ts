@@ -7,3 +7,5 @@ export { ordersApi, type Order, type OrderItem, type OrdersResponse, type Create
 export { gamesApi, type GameActivity, type GameStats, type LeaderboardEntry } from './gamesApi';
 export { screenTimeApi, type ScreenTimeLog, type ScreenTimeSummary, type Period, type ActivityType } from './screenTimeApi';
 export { profilesApi, type Profile, type ProfileStats, type UpdateProfileRequest } from './profilesApi';
+export { adminApi, type AdminStats, type UsersResponse, type UpdateUserRequest, type CreateProductRequest } from './adminApi';
+

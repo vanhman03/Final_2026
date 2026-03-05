@@ -19,6 +19,7 @@ import ParentModePage from "./pages/ParentModePage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ShopPage from "./pages/shop/ShopPage";
 import ResetPinPage from "./pages/auth/ResetPinPage";
+import BadgesPage from "./pages/BadgesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +37,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/reset-pin" element={<ResetPinPage />} />
-              
+
               {/* Main Parent UI (former child routes) */}
               <Route path="/home" element={<HomePage />} />
               <Route path="/videos" element={<VideoLibraryPage />} />
@@ -44,16 +45,19 @@ const App = () => (
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/color-match" element={<ColorMatchGame />} />
               <Route path="/games/puzzle" element={<PuzzleGame />} />
-              
+
               {/* Parent Mode (PIN protected) */}
               <Route path="/parent-mode" element={<ParentModePage />} />
-              
+
+              {/* Badges Page */}
+              <Route path="/badges" element={<BadgesPage />} />
+
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              
+
               {/* Shop */}
               <Route path="/shop" element={<ShopPage />} />
-              
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
