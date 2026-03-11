@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { videosApi, favoritesApi, Video } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const ageGroups = ['All Ages', '3-5', '5-8', '8-12'];
 
@@ -52,29 +53,64 @@ export default function VideoLibraryPage() {
     }
   }, [favoritesData]);
 
-  // Add favorite mutation
+  // Add favorite mutation - with optimistic update
   const addFavoriteMutation = useMutation({
-    mutationFn: (videoId: string) => favoritesApi.addFavorite(user?.id || '', videoId),
+    mutationFn: (videoId: string) =>
+      favoritesApi.addFavorite(user?.id || '', videoId),
+    onMutate: (videoId) => {
+      // Optimistic update: immediately show heart as filled
+      setFavoriteIds(prev => new Set([...prev, videoId]));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      toast.success('❤️ Added to Favorites!');
+    },
+    onError: (_err, videoId) => {
+      // Revert optimistic update on error
+      setFavoriteIds(prev => {
+        const next = new Set(prev);
+        next.delete(videoId);
+        return next;
+      });
+      toast.error('Failed to add to favorites. Please try again.');
     },
   });
 
-  // Remove favorite mutation
+  // Remove favorite mutation - with optimistic update
   const removeFavoriteMutation = useMutation({
     mutationFn: (videoId: string) => favoritesApi.removeFavoriteByVideo(videoId),
+    onMutate: (videoId) => {
+      // Optimistic update: immediately show heart as empty
+      setFavoriteIds(prev => {
+        const next = new Set(prev);
+        next.delete(videoId);
+        return next;
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      toast.success('Removed from Favorites');
+    },
+    onError: (_err, videoId) => {
+      // Revert optimistic update on error
+      setFavoriteIds(prev => new Set([...prev, videoId]));
+      toast.error('Failed to remove from favorites. Please try again.');
     },
   });
 
-  const toggleFavorite = (videoId: string) => {
+  const toggleFavorite = (e: React.MouseEvent, videoId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error('Please log in to save favorites');
+      return;
+    }
     if (favoriteIds.has(videoId)) {
       removeFavoriteMutation.mutate(videoId);
     } else {
       addFavoriteMutation.mutate(videoId);
     }
   };
+
 
   const videos = videosData?.videos || [];
   const categories = ['All', ...(categoriesData?.categories || [])];
@@ -243,18 +279,18 @@ export default function VideoLibraryPage() {
                     </div>
 
                     {/* Favorite button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(video.id);
-                      }}
-                      className="absolute top-2 right-2 w-10 h-10 bg-card/90 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                    <motion.button
+                      onClick={(e) => toggleFavorite(e, video.id)}
+                      whileTap={{ scale: 1.3 }}
+                      className="absolute top-2 right-2 w-10 h-10 bg-card/90 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-sm"
                     >
                       <Heart
-                        className={`w-5 h-5 transition-colors ${favoriteIds.has(video.id) ? 'fill-destructive text-destructive' : 'text-muted-foreground'
+                        className={`w-5 h-5 transition-all duration-200 ${favoriteIds.has(video.id)
+                            ? 'fill-red-500 text-red-500 scale-110'
+                            : 'text-muted-foreground hover:text-red-400'
                           }`}
                       />
-                    </button>
+                    </motion.button>
                   </div>
 
                   {/* Info */}

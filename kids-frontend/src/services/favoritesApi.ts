@@ -3,7 +3,6 @@ import { Video } from './videosApi';
 
 export interface Favorite {
     id: string;
-    user_id: string;
     child_id: string;
     video_id: string;
     video?: Video;

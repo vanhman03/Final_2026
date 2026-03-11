@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Trophy, RotateCcw, Star, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Trophy, RotateCcw, Star, Zap, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,25 @@ import confetti from "canvas-confetti";
 
 type Difficulty = "easy" | "medium" | "hard";
 
-interface PuzzlePiece {
+interface Card {
   id: number;
-  currentPosition: number;
-  correctPosition: number;
   emoji: string;
+  pairId: number;
+  isFlipped: boolean;
+  isMatched: boolean;
 }
 
-interface PuzzleConfig {
-  gridSize: number;
+interface DifficultyConfig {
+  pairs: number;
+  cols: number;
   label: string;
   points: number;
 }
 
-const difficultyConfig: Record<Difficulty, PuzzleConfig> = {
-  easy: { gridSize: 2, label: "Easy (2x2)", points: 25 },
-  medium: { gridSize: 3, label: "Medium (3x3)", points: 50 },
-  hard: { gridSize: 4, label: "Hard (4x4)", points: 100 },
+const difficultyConfig: Record<Difficulty, DifficultyConfig> = {
+  easy: { pairs: 2, cols: 2, label: "Easy (2x2)", points: 25 },
+  medium: { pairs: 6, cols: 4, label: "Medium (4x3)", points: 50 },
+  hard: { pairs: 8, cols: 4, label: "Hard (4x4)", points: 100 },
 };
 
 const puzzleThemes = [
@@ -49,45 +51,90 @@ const puzzleThemes = [
 
 export default function PuzzleGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [pieces, setPieces] = useState<PuzzlePiece[]>([]);
-  const [draggedPiece, setDraggedPiece] = useState<number | null>(null);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
+  const [matchedPairs, setMatchedPairs] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [currentTheme, setCurrentTheme] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   const config = difficultyConfig[difficulty];
-  const totalPieces = config.gridSize * config.gridSize;
   const theme = puzzleThemes[currentTheme];
 
-  const initializePuzzle = useCallback(() => {
-    const emojis = theme.emojis.slice(0, totalPieces);
-    const newPieces: PuzzlePiece[] = emojis.map((emoji, index) => ({
-      id: index,
-      currentPosition: index,
-      correctPosition: index,
-      emoji,
-    }));
-
-    // Shuffle pieces
-    const shuffledPositions = [...Array(totalPieces).keys()].sort(() => Math.random() - 0.5);
-    newPieces.forEach((piece, index) => {
-      piece.currentPosition = shuffledPositions[index];
+  const initializeGame = useCallback(() => {
+    const emojis = theme.emojis.slice(0, config.pairs);
+    // Create pairs: each emoji appears twice
+    const cardPairs: Card[] = [];
+    emojis.forEach((emoji, index) => {
+      cardPairs.push({ id: index * 2, emoji, pairId: index, isFlipped: false, isMatched: false });
+      cardPairs.push({ id: index * 2 + 1, emoji, pairId: index, isFlipped: false, isMatched: false });
     });
 
-    setPieces(newPieces);
+    // Shuffle cards using Fisher-Yates
+    for (let i = cardPairs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cardPairs[i], cardPairs[j]] = [cardPairs[j], cardPairs[i]];
+    }
+
+    setCards(cardPairs);
+    setFlippedCards([]);
     setMoves(0);
+    setMatchedPairs(0);
     setIsComplete(false);
     setGameStarted(true);
-  }, [totalPieces, theme.emojis]);
+    setIsChecking(false);
+  }, [config.pairs, theme.emojis]);
 
-  const checkCompletion = useCallback(() => {
-    const complete = pieces.every((piece) => piece.currentPosition === piece.correctPosition);
-    if (complete && pieces.length > 0 && gameStarted) {
+  // Check for match when two cards are flipped
+  useEffect(() => {
+    if (flippedCards.length === 2) {
+      setIsChecking(true);
+      setMoves((prev) => prev + 1);
+
+      const [firstId, secondId] = flippedCards;
+      const firstCard = cards.find((c) => c.id === firstId);
+      const secondCard = cards.find((c) => c.id === secondId);
+
+      if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
+        // Match found!
+        setTimeout(() => {
+          setCards((prev) =>
+            prev.map((card) =>
+              card.id === firstId || card.id === secondId
+                ? { ...card, isMatched: true, isFlipped: true }
+                : card
+            )
+          );
+          setMatchedPairs((prev) => prev + 1);
+          setFlippedCards([]);
+          setIsChecking(false);
+        }, 500);
+      } else {
+        // No match — flip back after delay
+        setTimeout(() => {
+          setCards((prev) =>
+            prev.map((card) =>
+              card.id === firstId || card.id === secondId
+                ? { ...card, isFlipped: false }
+                : card
+            )
+          );
+          setFlippedCards([]);
+          setIsChecking(false);
+        }, 1000);
+      }
+    }
+  }, [flippedCards, cards]);
+
+  // Check for game completion
+  useEffect(() => {
+    if (gameStarted && matchedPairs === config.pairs && config.pairs > 0) {
       setIsComplete(true);
-      const earnedPoints = Math.max(config.points - moves * 2, config.points / 2);
-      setScore((prev) => prev + Math.floor(earnedPoints));
+      const earnedPoints = Math.max(config.points - moves * 2, Math.floor(config.points / 2));
+      setScore((prev) => prev + earnedPoints);
 
       confetti({
         particleCount: 150,
@@ -96,68 +143,38 @@ export default function PuzzleGame() {
         colors: ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181"],
       });
 
-      toast.success(`🎉 Puzzle Complete! +${Math.floor(earnedPoints)} points!`);
+      toast.success(`🎉 All pairs found! +${earnedPoints} points!`);
     }
-  }, [pieces, config.points, moves, gameStarted]);
+  }, [matchedPairs, config.pairs, config.points, moves, gameStarted]);
 
-  useEffect(() => {
-    if (pieces.length > 0) {
-      checkCompletion();
-    }
-  }, [pieces, checkCompletion]);
+  const handleCardClick = (cardId: number) => {
+    if (isChecking) return; // Wait for current check
+    if (flippedCards.length >= 2) return; // Already checking
 
-  const handleDragStart = (pieceId: number) => {
-    setDraggedPiece(pieceId);
-  };
+    const card = cards.find((c) => c.id === cardId);
+    if (!card || card.isFlipped || card.isMatched) return; // Already flipped or matched
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (targetPosition: number) => {
-    if (draggedPiece === null) return;
-
-    setPieces((prevPieces) => {
-      const newPieces = [...prevPieces];
-      const draggedPieceObj = newPieces.find((p) => p.id === draggedPiece);
-      const targetPieceObj = newPieces.find((p) => p.currentPosition === targetPosition);
-
-      if (draggedPieceObj && targetPieceObj && draggedPieceObj.id !== targetPieceObj.id) {
-        const tempPosition = draggedPieceObj.currentPosition;
-        draggedPieceObj.currentPosition = targetPieceObj.currentPosition;
-        targetPieceObj.currentPosition = tempPosition;
-        setMoves((prev) => prev + 1);
-      }
-
-      return newPieces;
-    });
-
-    setDraggedPiece(null);
-  };
-
-  const handleTouchStart = (pieceId: number) => {
-    setDraggedPiece(pieceId);
-  };
-
-  const handleTouchEnd = (targetPosition: number) => {
-    if (draggedPiece === null) return;
-    handleDrop(targetPosition);
-  };
-
-  const getPieceAtPosition = (position: number) => {
-    return pieces.find((p) => p.currentPosition === position);
+    // Flip the card
+    setCards((prev) =>
+      prev.map((c) => (c.id === cardId ? { ...c, isFlipped: true } : c))
+    );
+    setFlippedCards((prev) => [...prev, cardId]);
   };
 
   const changeDifficulty = (newDifficulty: Difficulty) => {
     setDifficulty(newDifficulty);
     setGameStarted(false);
-    setPieces([]);
+    setCards([]);
+    setFlippedCards([]);
+    setMatchedPairs(0);
   };
 
   const changeTheme = () => {
     setCurrentTheme((prev) => (prev + 1) % puzzleThemes.length);
     setGameStarted(false);
-    setPieces([]);
+    setCards([]);
+    setFlippedCards([]);
+    setMatchedPairs(0);
   };
 
   return (
@@ -177,7 +194,7 @@ export default function PuzzleGame() {
             </Link>
             <div>
               <h1 className="text-3xl font-extrabold">Puzzle Fun 🧩</h1>
-              <p className="text-muted-foreground">Drag and drop to solve the puzzle!</p>
+              <p className="text-muted-foreground">Flip cards and find matching pairs!</p>
             </div>
           </motion.div>
 
@@ -202,6 +219,13 @@ export default function PuzzleGame() {
                     <div>
                       <div className="text-2xl font-extrabold">{moves}</div>
                       <div className="text-xs text-muted-foreground">Moves</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-6 h-6 text-secondary" />
+                    <div>
+                      <div className="text-2xl font-extrabold">{matchedPairs}/{config.pairs}</div>
+                      <div className="text-xs text-muted-foreground">Pairs</div>
                     </div>
                   </div>
                 </div>
@@ -234,20 +258,20 @@ export default function PuzzleGame() {
               ))}
             </motion.div>
 
-            {/* Start / Restart Button */}
+            {/* Start Button */}
             {!gameStarted && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center mb-6"
               >
-                <Button variant="hero" size="xl" onClick={initializePuzzle}>
-                  Start Puzzle! 🎯
+                <Button variant="hero" size="xl" onClick={initializeGame}>
+                  Start Game! 🎯
                 </Button>
               </motion.div>
             )}
 
-            {/* Puzzle Grid */}
+            {/* Card Grid */}
             {gameStarted && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -256,47 +280,78 @@ export default function PuzzleGame() {
                 className="bg-card rounded-3xl p-6 shadow-card border border-border"
               >
                 <div
-                  className="grid gap-2 mx-auto"
+                  className="grid gap-3 mx-auto"
                   style={{
-                    gridTemplateColumns: `repeat(${config.gridSize}, 1fr)`,
-                    maxWidth: config.gridSize * 100 + (config.gridSize - 1) * 8,
+                    gridTemplateColumns: `repeat(${config.cols}, 1fr)`,
+                    maxWidth: config.cols * 100 + (config.cols - 1) * 12,
                   }}
                 >
-                  {[...Array(totalPieces)].map((_, position) => {
-                    const piece = getPieceAtPosition(position);
-                    const isCorrect = piece && piece.currentPosition === piece.correctPosition;
-                    const isBeingDragged = piece && piece.id === draggedPiece;
-
-                    return (
+                  <AnimatePresence>
+                    {cards.map((card) => (
                       <motion.div
-                        key={position}
-                        className={`
-                          aspect-square rounded-2xl flex items-center justify-center text-4xl md:text-5xl
-                          cursor-grab active:cursor-grabbing select-none transition-all
-                          ${isCorrect ? "bg-success/20 border-2 border-success" : "bg-muted border-2 border-border"}
-                          ${isBeingDragged ? "opacity-50 scale-95" : "hover:scale-105"}
-                        `}
-                        style={{ minHeight: 80 }}
-                        draggable
-                        onDragStart={() => piece && handleDragStart(piece.id)}
-                        onDragOver={handleDragOver}
-                        onDrop={() => handleDrop(position)}
-                        onTouchStart={() => piece && handleTouchStart(piece.id)}
-                        onTouchEnd={() => handleTouchEnd(position)}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        key={card.id}
+                        initial={{ opacity: 0, scale: 0.8, rotateY: 180 }}
+                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="aspect-square"
+                        style={{ perspective: 600 }}
                       >
-                        {piece?.emoji}
+                        <motion.div
+                          className={`
+                            w-full h-full rounded-2xl cursor-pointer select-none relative
+                            ${card.isMatched ? "ring-3 ring-success" : ""}
+                          `}
+                          style={{
+                            transformStyle: "preserve-3d",
+                            minHeight: 80,
+                          }}
+                          animate={{
+                            rotateY: card.isFlipped || card.isMatched ? 180 : 0,
+                          }}
+                          transition={{ duration: 0.4, ease: "easeInOut" }}
+                          onClick={() => handleCardClick(card.id)}
+                          whileHover={!card.isFlipped && !card.isMatched ? { scale: 1.05 } : {}}
+                          whileTap={!card.isFlipped && !card.isMatched ? { scale: 0.95 } : {}}
+                        >
+                          {/* Card Back (face-down) */}
+                          <div
+                            className={`
+                              absolute inset-0 rounded-2xl flex items-center justify-center text-3xl md:text-4xl
+                              bg-gradient-to-br from-primary/80 to-secondary/80 border-2 border-primary/30
+                              shadow-lg hover:shadow-xl transition-shadow
+                            `}
+                            style={{ backfaceVisibility: "hidden" }}
+                          >
+                            <span className="text-3xl">❓</span>
+                          </div>
+
+                          {/* Card Front (face-up) */}
+                          <div
+                            className={`
+                              absolute inset-0 rounded-2xl flex items-center justify-center text-4xl md:text-5xl
+                              ${card.isMatched
+                                ? "bg-success/20 border-2 border-success shadow-lg"
+                                : "bg-muted border-2 border-border shadow-md"
+                              }
+                            `}
+                            style={{
+                              backfaceVisibility: "hidden",
+                              transform: "rotateY(180deg)",
+                            }}
+                          >
+                            {card.emoji}
+                          </div>
+                        </motion.div>
                       </motion.div>
-                    );
-                  })}
+                    ))}
+                  </AnimatePresence>
                 </div>
 
                 {/* Restart Button */}
                 <div className="flex justify-center mt-6 gap-4">
-                  <Button variant="outline" onClick={initializePuzzle} className="rounded-full">
+                  <Button variant="outline" onClick={initializeGame} className="rounded-full">
                     <RotateCcw className="w-4 h-4 mr-2" />
-                    Shuffle Again
+                    New Game
                   </Button>
                 </div>
               </motion.div>
@@ -317,9 +372,9 @@ export default function PuzzleGame() {
                   🎉
                 </motion.div>
                 <h2 className="text-2xl font-extrabold mb-2">Awesome Job!</h2>
-                <p className="text-lg opacity-90 mb-4">You solved the puzzle in {moves} moves!</p>
+                <p className="text-lg opacity-90 mb-4">You found all pairs in {moves} moves!</p>
                 <div className="flex justify-center gap-3">
-                  <Button variant="secondary" onClick={initializePuzzle}>
+                  <Button variant="secondary" onClick={initializeGame}>
                     Play Again
                   </Button>
                   <Button variant="outline" onClick={changeTheme}>
@@ -336,8 +391,8 @@ export default function PuzzleGame() {
               transition={{ delay: 0.3 }}
               className="mt-6 text-center text-muted-foreground"
             >
-              <p className="text-sm">💡 Drag pieces to swap them. Match each piece to its correct position!</p>
-              <p className="text-sm mt-1">Green borders show correctly placed pieces.</p>
+              <p className="text-sm">💡 Flip two cards at a time. If they match, they stay open!</p>
+              <p className="text-sm mt-1">Find all matching pairs to win. Try to use fewer moves! 🧠</p>
             </motion.div>
           </div>
         </div>

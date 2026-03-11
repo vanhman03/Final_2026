@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth, PinVerificationError } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION = 1 * 60 * 1000;
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_DURATION = 1 * 10 * 1000;
 
 const getStorageKeys = (userId: string | undefined) => ({
   lockout: userId ? `pin_lockout_until_${userId}` : "pin_lockout_until",

@@ -7,7 +7,7 @@ import { z } from 'zod';
 const router = Router();
 
 const favoriteSchema = z.object({
-    child_id: z.string().uuid(),
+    child_id: z.string().uuid().optional(),
     video_id: z.string().uuid(),
 });
 
@@ -35,19 +35,37 @@ router.get('/', authenticateUser, async (req: Request, res: Response) => {
         if (!userId) return errorResponse(res, 'User ID not found', 401);
 
         const { child_id } = req.query;
+        // Use child_id if provided, otherwise assume the user itself is the "child"
+        const effectiveChildId = child_id || userId;
 
-        let query = supabase
+        // Fetch favorites and manually fetch joined videos to avoid PGRST200 foreign key error
+        // Because children table was dropped, the FK might be missing or broken.
+        // We use the service role key so RLS is bypassed.
+        const { data: favorites, error } = await supabase
             .from('favorites')
-            .select(`*, video:videos (*)`)
-            .eq('user_id', userId)
+            .select('*')
+            .eq('child_id', effectiveChildId)
             .order('created_at', { ascending: false });
 
-        if (child_id) query = query.eq('child_id', child_id as string);
-
-        const { data: favorites, error } = await query;
-
         if (error) return errorResponse(res, 'Failed to fetch favorites', 500, error);
-        return successResponse(res, 'Favorites retrieved', favorites);
+
+        if (!favorites || favorites.length === 0) {
+            return successResponse(res, 'Favorites retrieved', []);
+        }
+
+        // Fetch corresponding videos manually
+        const videoIds = favorites.map(f => f.video_id);
+        const { data: videos } = await supabase
+            .from('videos')
+            .select('*')
+            .in('id', videoIds);
+
+        const mergedFavorites = favorites.map(fav => ({
+            ...fav,
+            video: videos?.find(v => v.id === fav.video_id)
+        }));
+
+        return successResponse(res, 'Favorites retrieved', mergedFavorites);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to fetch favorites';
         return errorResponse(res, message, 500);
@@ -88,21 +106,25 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
         if (!userId) return errorResponse(res, 'User ID not found', 401);
 
         const { child_id, video_id } = favoriteSchema.parse(req.body);
+        // Use child_id if provided, otherwise fall back to userId
+        const effectiveChildId = child_id || userId;
 
         const { data: existing } = await supabase
             .from('favorites')
             .select('id')
-            .eq('user_id', userId)
-            .eq('child_id', child_id)
+            .eq('child_id', effectiveChildId)
             .eq('video_id', video_id)
-            .single();
+            .maybeSingle();
 
         if (existing) return errorResponse(res, 'Video already in favorites', 409);
 
+        // Insert using service role (bypasses RLS).
+        // Cast to any to bypass strict TS type if schema generation is out of sync.
         const { data: favorite, error } = await supabase
             .from('favorites')
-            .insert([{ user_id: userId, child_id, video_id, created_at: new Date().toISOString() }])
-            .select(`*, video:videos (*)`)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .insert([{ child_id: effectiveChildId, video_id: video_id, created_at: new Date().toISOString() }] as any)
+            .select()
             .single();
 
         if (error) return errorResponse(res, 'Failed to add favorite', 500, error);
@@ -139,7 +161,11 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
 
         const { id } = req.params;
 
-        const { error } = await supabase.from('favorites').delete().eq('id', id).eq('user_id', userId);
+        const { error } = await supabase
+            .from('favorites')
+            .delete()
+            .eq('id', id);
+
         if (error) return errorResponse(res, 'Failed to remove favorite', 500, error);
         return successResponse(res, 'Removed from favorites');
     } catch (error: unknown) {
@@ -179,11 +205,14 @@ router.delete('/video/:videoId', authenticateUser, async (req: Request, res: Res
 
         const { videoId } = req.params;
         const { child_id } = req.query;
+        const effectiveChildId = child_id || userId;
 
-        let query = supabase.from('favorites').delete().eq('video_id', videoId).eq('user_id', userId);
-        if (child_id) query = query.eq('child_id', child_id as string);
+        const { error } = await supabase
+            .from('favorites')
+            .delete()
+            .eq('video_id', videoId)
+            .eq('child_id', effectiveChildId as string);
 
-        const { error } = await query;
         if (error) return errorResponse(res, 'Failed to remove favorite', 500, error);
         return successResponse(res, 'Removed from favorites');
     } catch (error: unknown) {
@@ -223,11 +252,15 @@ router.get('/check/:videoId', authenticateUser, async (req: Request, res: Respon
 
         const { videoId } = req.params;
         const { child_id } = req.query;
+        const effectiveChildId = child_id || userId;
 
-        let query = supabase.from('favorites').select('id').eq('video_id', videoId).eq('user_id', userId);
-        if (child_id) query = query.eq('child_id', child_id as string);
+        const { data, error } = await supabase
+            .from('favorites')
+            .select('id')
+            .eq('video_id', videoId)
+            .eq('child_id', effectiveChildId as string)
+            .maybeSingle();
 
-        const { data, error } = await query.single();
         if (error && error.code !== 'PGRST116') return errorResponse(res, 'Failed to check favorite', 500, error);
 
         return successResponse(res, 'Favorite check', { isFavorite: !!data });

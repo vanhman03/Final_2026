@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Play, Gamepad2, Trophy, Star, Clock, Heart } from 'lucide-react';
@@ -5,42 +7,38 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { videosApi, Video } from '@/services';
 
 const quickActions = [
-  { 
-    icon: Play, 
-    label: 'Watch Videos', 
+  {
+    icon: Play,
+    label: 'Watch Videos',
     href: '/videos',
     color: 'bg-primary',
     emoji: '📺',
   },
-  { 
-    icon: Gamepad2, 
-    label: 'Play Games', 
+  {
+    icon: Gamepad2,
+    label: 'Play Games',
     href: '/games',
     color: 'bg-secondary',
     emoji: '🎮',
   },
-  { 
-    icon: Trophy, 
-    label: 'My Badges', 
+  {
+    icon: Trophy,
+    label: 'My Badges',
     href: '/badges',
     color: 'bg-accent',
     emoji: '🏆',
   },
-  { 
-    icon: Heart, 
-    label: 'Favorites', 
+  {
+    icon: Heart,
+    label: 'Favorites',
     href: '/favorites',
     color: 'bg-success',
     emoji: '❤️',
   },
-];
-
-const recentVideos = [
-  { id: 1, title: 'Learn ABC Song', thumbnail: '🔤', duration: '3:45', category: 'Alphabet' },
-  { id: 2, title: 'Counting 1-10', thumbnail: '🔢', duration: '4:20', category: 'Numbers' },
-  { id: 3, title: 'Animal Sounds', thumbnail: '🦁', duration: '5:10', category: 'Animals' },
 ];
 
 const containerVariants = {
@@ -58,7 +56,8 @@ const itemVariants = {
 
 export default function HomePage() {
   const { user } = useAuth();
-  
+  const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
+
   // Use user's profile data directly (no more child concept)
   const displayName = user?.name || 'Friend';
   const points = user?.points || 0;
@@ -68,6 +67,14 @@ export default function HomePage() {
   const avatar = user?.avatar || '🦄';
 
   const screenTimeProgress = Math.min((screenTimeUsed / screenTimeLimit) * 100, 100);
+
+  // Fetch latest videos from API (recently added by admin)
+  const { data: videosData, isLoading: videosLoading } = useQuery({
+    queryKey: ['recent-videos'],
+    queryFn: () => videosApi.getVideos({ limit: 6 }),
+  });
+
+  const recentVideos = videosData?.videos || [];
 
   return (
     <Layout>
@@ -90,12 +97,12 @@ export default function HomePage() {
                 </motion.div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold">
-                    Hi, <span className="text-gradient-hero">{displayName}</span>! 
+                    Hi, <span className="text-gradient-hero">{displayName}</span>!
                   </h1>
                   <p className="text-muted-foreground">Ready for some fun learning today?</p>
                 </div>
               </div>
-              
+
               {/* Points & Screen Time */}
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2 bg-warning/20 px-4 py-2 rounded-2xl">
@@ -138,6 +145,52 @@ export default function HomePage() {
             ))}
           </motion.div>
 
+          {/* Video Player Modal */}
+          {playingVideo && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-50 bg-foreground/80 flex items-center justify-center p-4"
+              onClick={() => setPlayingVideo(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="bg-card rounded-3xl overflow-hidden shadow-2xl max-w-4xl w-full"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="aspect-video bg-foreground">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${playingVideo.youtube_video_id}?autoplay=1&rel=0&modestbranding=1`}
+                    title={playingVideo.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold mb-2">{playingVideo.title}</h2>
+                  <div className="flex items-center gap-4 text-muted-foreground">
+                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                      {playingVideo.category}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {playingVideo.duration}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setPlayingVideo(null)}
+                  >
+                    Close Video
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
           {/* Continue Watching */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -151,38 +204,71 @@ export default function HomePage() {
                 <Button variant="ghost">See All</Button>
               </Link>
             </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              {recentVideos.map((video, index) => (
-                <motion.div
-                  key={video.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 * index }}
-                  whileHover={{ y: -5 }}
-                  className="bg-card rounded-2xl shadow-card border border-border overflow-hidden cursor-pointer group"
-                >
-                  <div className="aspect-video bg-gradient-sky flex items-center justify-center text-6xl relative">
-                    {video.thumbnail}
-                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        whileHover={{ scale: 1 }}
-                        className="w-14 h-14 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Play className="w-6 h-6 text-primary-foreground ml-1" />
-                      </motion.div>
+
+            {/* Loading State */}
+            {videosLoading && (
+              <div className="grid md:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-card rounded-2xl overflow-hidden">
+                    <Skeleton className="aspect-video w-full" />
+                    <div className="p-4">
+                      <Skeleton className="h-5 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2" />
                     </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-bold truncate">{video.title}</h3>
-                    <div className="flex items-center justify-between mt-1 text-sm text-muted-foreground">
-                      <span>{video.category}</span>
-                      <span>{video.duration}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Videos Grid */}
+            {!videosLoading && recentVideos.length > 0 && (
+              <div className="grid md:grid-cols-3 gap-4">
+                {recentVideos.map((video, index) => (
+                  <motion.div
+                    key={video.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * index }}
+                    whileHover={{ y: -5 }}
+                    className="bg-card rounded-2xl shadow-card border border-border overflow-hidden cursor-pointer group"
+                    onClick={() => setPlayingVideo(video)}
+                  >
+                    <div className="aspect-video bg-gradient-sky flex items-center justify-center text-6xl relative">
+                      {video.thumbnail_emoji || '📺'}
+                      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          whileHover={{ scale: 1 }}
+                          className="w-14 h-14 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Play className="w-6 h-6 text-primary-foreground ml-1" />
+                        </motion.div>
+                      </div>
+                      {/* Duration badge */}
+                      <div className="absolute bottom-2 right-2 bg-foreground/80 text-background px-2 py-1 rounded-lg text-xs font-medium">
+                        {video.duration}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="p-4">
+                      <h3 className="font-bold truncate">{video.title}</h3>
+                      <div className="flex items-center justify-between mt-1 text-sm text-muted-foreground">
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
+                          {video.category}
+                        </span>
+                        <span className="text-xs">Ages {video.age_group}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {!videosLoading && recentVideos.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="text-4xl mb-2">📺</div>
+                <p>No videos yet. Check back soon!</p>
+              </div>
+            )}
           </motion.section>
 
           {/* My Badges */}
