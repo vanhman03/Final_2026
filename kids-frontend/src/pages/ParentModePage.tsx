@@ -27,7 +27,7 @@ const GAME_TYPE_EMOJI: Record<string, string> = {
 };
 
 export default function ParentModePage() {
-  const { user, verifyPin, updatePin } = useAuth();
+  const { user, verifyPin, updatePin, refreshUserData } = useAuth();
   const { isParentModeActive, deactivateParentMode } = useParentMode();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -125,7 +125,7 @@ export default function ParentModePage() {
           {/* Quick Stats */}
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: '⏱️', value: `${user?.totalWatchTime || 0} phút`, label: 'Thời gian xem', gradient: 'from-blue-400 to-cyan-500' },
+              { icon: '📺', value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
               { icon: '⭐', value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
               { icon: '🎮', value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
               { icon: '🏆', value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
@@ -160,10 +160,27 @@ export default function ParentModePage() {
                     : `✅ Còn ${Math.round((user?.screenTimeLimit || 60) - (user?.totalWatchTime || 0))} phút`}
                 </p>
               </div>
-              <div className="flex items-center justify-end">
-                <Button variant="outline" className="gap-2 rounded-2xl">
-                  ⚙️ Điều chỉnh giới hạn
-                </Button>
+              <div className="flex items-center justify-end gap-3">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number" 
+                    value={user?.screenTimeLimit || 60} 
+                    onChange={async (e) => {
+                      const newLimit = parseInt(e.target.value);
+                      if (!isNaN(newLimit) && newLimit > 0) {
+                        try {
+                          await profilesApi.updateProfile({ screen_time_limit: newLimit });
+                          refreshUserData();
+                          toast({ title: "✅ Đã cập nhật", description: `Giới hạn thời gian mới: ${newLimit} phút` });
+                        } catch (err) {
+                          toast({ title: "Lỗi", description: "Không thể cập nhật giới hạn", variant: "destructive" });
+                        }
+                      }
+                    }}
+                    className="w-24 rounded-xl"
+                  />
+                  <span className="text-sm font-medium">phút</span>
+                </div>
               </div>
             </div>
           </motion.div>

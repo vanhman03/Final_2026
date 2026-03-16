@@ -3,6 +3,7 @@ import { authenticateUser } from '../middleware/auth';
 import { supabase } from '../config/supabase';
 import { successResponse, errorResponse } from '../utils/response';
 import { z } from 'zod';
+import { achievementService } from '../utils/achievementService';
 
 const router = Router();
 
@@ -11,6 +12,7 @@ const gameActivitySchema = z.object({
     game_type: z.string().min(1).max(100),
     level: z.string().optional(),
     score: z.number().min(0).default(0),
+    streak: z.number().min(0).default(0),
     time_spent: z.number().min(0).default(0),
 });
 
@@ -104,13 +106,11 @@ router.get('/', authenticateUser, async (req: Request, res: Response) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [child_id, game_type]
+ *             required: [child_id]
  *             properties:
  *               child_id:
  *                 type: string
  *                 format: uuid
- *               game_type:
- *                 type: string
  *               level:
  *                 type: string
  *               score:
@@ -121,12 +121,13 @@ router.get('/', authenticateUser, async (req: Request, res: Response) => {
  *       201:
  *         description: Game activity logged
  */
-router.post('/', authenticateUser, async (req: Request, res: Response) => {
+router.post('/:game_type/activity', authenticateUser, async (req: Request, res: Response) => {
     try {
         const userId = req.user?.id;
         if (!userId) return errorResponse(res, 'User ID not found', 401);
 
-        const gameData = gameActivitySchema.parse(req.body);
+        const { game_type } = req.params;
+        const gameData = gameActivitySchema.parse({ ...req.body, game_type });
 
         const { data: activity, error } = await supabase
             .from('game_activities')
@@ -135,6 +136,14 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
             .single();
 
         if (error) return errorResponse(res, 'Failed to log game activity', 500, error);
+
+        // Check for achievements/badges
+        const newBadges = await achievementService.checkAchievements(userId, {
+            game_type: gameData.game_type,
+            level: gameData.level,
+            score: gameData.score,
+            streak: gameData.streak
+        });
 
         if (gameData.score > 0) {
             await updateGameHistory(userId, gameData.child_id, {
@@ -145,7 +154,10 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
             });
         }
 
-        return successResponse(res, 'Game activity logged', activity, 201);
+        return successResponse(res, 'Game activity logged', { 
+            activity, 
+            newBadges: newBadges.map(b => b.id) 
+        }, 201);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to log game activity';
         return errorResponse(res, message, 400);

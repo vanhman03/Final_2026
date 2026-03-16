@@ -6,6 +6,9 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { useAuth } from "@/context/AuthContext";
+import { gamesApi } from "@/services/gamesApi";
+import { profilesApi } from "@/services/profilesApi";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -50,6 +53,7 @@ const puzzleThemes = [
 ];
 
 export default function PuzzleGame() {
+  const { user } = useAuth();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -135,17 +139,47 @@ export default function PuzzleGame() {
       setIsComplete(true);
       const earnedPoints = Math.max(config.points - moves * 2, Math.floor(config.points / 2));
       setScore((prev) => prev + earnedPoints);
-
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181"],
-      });
-
-      toast.success(`🎉 All pairs found! +${earnedPoints} points!`);
+      
+      handleGameOver(earnedPoints);
     }
   }, [matchedPairs, config.pairs, config.points, moves, gameStarted]);
+
+  const handleGameOver = async (earnedPoints: number) => {
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181"],
+    });
+
+    toast.success(`🎉 All pairs found! +${earnedPoints} points!`);
+
+    // Log game activity and check for badges
+    try {
+      const response = await gamesApi.logActivity('puzzle', {
+        child_id: user?.id || '',
+        level: difficulty,
+        score: earnedPoints,
+        time_spent: 0
+      });
+
+      if (response.newBadges && response.newBadges.length > 0) {
+        toast.success(`🎉 Huy hiệu mới: ${response.newBadges.join(', ')}`);
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.5 },
+        });
+      }
+
+      // Add points to profile
+      if (earnedPoints > 0) {
+        await profilesApi.addPoints(earnedPoints);
+      }
+    } catch (error) {
+      console.error('Failed to log game activity:', error);
+    }
+  };
 
   const handleCardClick = (cardId: number) => {
     if (isChecking) return; // Wait for current check

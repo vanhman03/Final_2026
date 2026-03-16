@@ -5,7 +5,7 @@ import { Search, Play, Heart, Clock } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { videosApi, favoritesApi, Video } from '@/services';
+import { videosApi, favoritesApi, Video, profilesApi } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 const ageGroups = ['All Ages', '3-5', '5-8', '8-12'];
 
 export default function VideoLibraryPage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -109,6 +109,17 @@ export default function VideoLibraryPage() {
     } else {
       addFavoriteMutation.mutate(videoId);
     }
+  };
+
+  const handlePlayVideo = (video: Video) => {
+    setPlayingVideo(video);
+    profilesApi.incrementVideoCount()
+      .then(() => {
+        refreshUserData();
+      })
+      .catch(err => {
+        console.error('Failed to increment video count:', err);
+      });
   };
 
 
@@ -256,7 +267,7 @@ export default function VideoLibraryPage() {
                   transition={{ delay: 0.05 * index }}
                   whileHover={{ y: -8 }}
                   className="bg-card rounded-3xl shadow-card border border-border overflow-hidden group cursor-pointer"
-                  onClick={() => setPlayingVideo(video)}
+                  onClick={() => handlePlayVideo(video)}
                 >
                   {/* Thumbnail */}
                   <div className="aspect-video bg-gradient-sky relative flex items-center justify-center text-7xl">

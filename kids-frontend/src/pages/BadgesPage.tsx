@@ -12,12 +12,10 @@ const ALL_BADGES = [
     { id: '🌟 Star Learner', label: 'Star Learner', emoji: '🌟', desc: 'Học giỏi xuất sắc!', color: 'from-yellow-400 to-orange-400' },
     { id: '🎮 Game Master', label: 'Game Master', emoji: '🎮', desc: 'Bậc thầy trò chơi!', color: 'from-purple-400 to-indigo-500' },
     { id: '📚 Bookworm', label: 'Bookworm', emoji: '📚', desc: 'Yêu thích đọc sách!', color: 'from-blue-400 to-cyan-400' },
-    { id: '🎨 Creative Kid', label: 'Creative Kid', emoji: '🎨', desc: 'Bé sáng tạo tuyệt vời!', color: 'from-pink-400 to-fuchsia-500' },
     { id: '🏆 Top Scorer', label: 'Top Scorer', emoji: '🏆', desc: 'Người ghi điểm cao nhất!', color: 'from-amber-400 to-yellow-500' },
-    { id: '⚡ Speed Reader', label: 'Speed Reader', emoji: '⚡', desc: 'Đọc nhanh như chớp!', color: 'from-teal-400 to-green-500' },
-    { id: '🔢 Math Wizard', label: 'Math Wizard', emoji: '🔢', desc: 'Phù thủy toán học!', color: 'from-indigo-400 to-violet-500' },
-    { id: '🎵 Music Lover', label: 'Music Lover', emoji: '🎵', desc: 'Yêu âm nhạc!', color: 'from-rose-400 to-pink-500' },
-    { id: '🦁 Brave Explorer', label: 'Brave Explorer', emoji: '🦁', desc: 'Nhà thám hiểm dũng cảm!', color: 'from-orange-400 to-red-500' },
+    { id: '🔥 Color Streak Master', label: 'Color Streak Master', emoji: '🔥', desc: '10 chuỗi thắng liên tiếp trong Color Match!', color: 'from-orange-500 to-red-600' },
+    { id: '🧩 Puzzle Pro', label: 'Puzzle Pro', emoji: '🧩', desc: 'Hoàn thành Puzzle mức độ Trung bình!', color: 'from-blue-500 to-indigo-600' },
+    { id: '🧠 Puzzle Zen Master', label: 'Puzzle Zen Master', emoji: '🧠', desc: 'Hoàn thành Puzzle mức độ Khó!', color: 'from-purple-600 to-pink-600' },
     { id: '🌈 Rainbow Achiever', label: 'Rainbow Achiever', emoji: '🌈', desc: 'Hoàn thành mọi thử thách!', color: 'from-violet-400 to-pink-500' },
 ];
 
@@ -105,7 +103,8 @@ export default function BadgesPage() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         {earnedBadges.map((badge, idx) => (
                                             <motion.div key={badge.id}
-                                                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 * idx, type: 'spring', stiffness: 200 }}
+                                                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: 0.05 * idx, type: 'spring', stiffness: 200, rotate: { type: 'tween' } }}
                                                 whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
                                                 className={`bg-gradient-to-br ${badge.color} rounded-3xl p-5 text-white shadow-lg text-center cursor-default relative overflow-hidden`}>
                                                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">

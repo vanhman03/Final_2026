@@ -7,6 +7,7 @@ export interface Profile {
     avatar_url?: string;
     screen_time_limit?: number;
     total_watch_time?: number;
+    videos_watched_count?: number;
     points: number;
     badges: string[];
     pin_hash?: string;
@@ -17,6 +18,7 @@ export interface Profile {
 
 export interface ProfileStats {
     totalWatchTime: number;
+    videosWatchedCount: number;
     points: number;
     badges: string[];
     recentGames: unknown[];
@@ -44,4 +46,7 @@ export const profilesApi = {
 
     addPoints: (points: number) =>
         api.post<{ points: number }>('/api/profiles/me/add-points', { points }),
+
+    incrementVideoCount: () =>
+        api.post<{ videos_watched_count: number }>('/api/profiles/me/increment-video-count'),
 };

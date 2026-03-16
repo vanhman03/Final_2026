@@ -9,6 +9,7 @@ export interface GameActivity {
     score: number;
     time_spent: number;
     played_at: string;
+    newBadges?: string[];
 }
 
 export interface GameActivitiesResponse {
@@ -46,6 +47,7 @@ export interface LogGameActivityRequest {
     game_type: string;
     level?: string;
     score?: number;
+    streak?: number;
     time_spent?: number;
 }
 
@@ -59,8 +61,8 @@ export const gamesApi = {
         return api.get<GameActivitiesResponse>(`/api/games?${params}`);
     },
 
-    logActivity: (data: LogGameActivityRequest) =>
-        api.post<GameActivity>('/api/games', data),
+    logActivity: (gameType: string, data: Omit<LogGameActivityRequest, 'game_type'>) =>
+        api.post<GameActivity>(`/api/games/${gameType}/activity`, data),
 
     getStats: (childId: string) =>
         api.get<GameStats>(`/api/games/stats?child_id=${childId}`),

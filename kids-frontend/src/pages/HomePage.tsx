@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { videosApi, Video } from '@/services';
+import { videosApi, Video, profilesApi } from '@/services';
 
 const quickActions = [
   {
@@ -55,7 +55,7 @@ const itemVariants = {
 };
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
 
   // Use user's profile data directly (no more child concept)
@@ -231,7 +231,10 @@ export default function HomePage() {
                     transition={{ delay: 0.1 * index }}
                     whileHover={{ y: -5 }}
                     className="bg-card rounded-2xl shadow-card border border-border overflow-hidden cursor-pointer group"
-                    onClick={() => setPlayingVideo(video)}
+                    onClick={() => {
+                      setPlayingVideo(video);
+                      profilesApi.incrementVideoCount().then(() => refreshUserData()).catch(console.error);
+                    }}
                   >
                     <div className="aspect-video bg-gradient-sky flex items-center justify-center text-6xl relative">
                       {video.thumbnail_emoji || '📺'}
@@ -285,7 +288,7 @@ export default function HomePage() {
                     key={badge}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 * index, type: 'spring' }}
+                    transition={{ delay: 0.1 * index, type: 'spring', rotate: { type: 'tween' } }}
                     whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                     className="bg-gradient-fun text-primary-foreground px-4 py-2 rounded-full font-bold shadow-button"
                   >

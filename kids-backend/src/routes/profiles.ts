@@ -42,7 +42,7 @@ router.get('/me', authenticateUser, async (req: Request, res: Response) => {
 
         const { data: profile, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*, videos_watched_count')
             .eq('user_id', userId)
             .single();
 
@@ -258,7 +258,7 @@ router.get('/me/stats', authenticateUser, async (req: Request, res: Response) =>
 
         const { data: profile, error } = await supabase
             .from('profiles')
-            .select('total_watch_time, points, badges, game_history')
+            .select('total_watch_time, points, badges, game_history, videos_watched_count')
             .eq('user_id', userId)
             .single();
 
@@ -268,6 +268,7 @@ router.get('/me/stats', authenticateUser, async (req: Request, res: Response) =>
 
         return successResponse(res, 'Stats retrieved', {
             totalWatchTime: profile?.total_watch_time || 0,
+            videosWatchedCount: profile?.videos_watched_count || 0,
             points: profile?.points || 0,
             badges: profile?.badges || [],
             recentGames: profile?.game_history || [],
@@ -336,6 +337,55 @@ router.post('/me/add-points', authenticateUser, async (req: Request, res: Respon
         return successResponse(res, 'Points added', { points: updated?.points });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to add points';
+        return errorResponse(res, message, 400);
+    }
+});
+
+/**
+ * @swagger
+ * /api/profiles/me/increment-video-count:
+ *   post:
+ *     summary: Increment watched video count
+ *     tags: [Profiles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Count incremented
+ */
+router.post('/me/increment-video-count', authenticateUser, async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+
+        const { data: profile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('videos_watched_count')
+            .eq('user_id', userId)
+            .single();
+
+        if (fetchError) {
+            return errorResponse(res, 'Failed to fetch profile', 500, fetchError);
+        }
+
+        const newCount = (profile?.videos_watched_count || 0) + 1;
+
+        const { data: updated, error } = await supabase
+            .from('profiles')
+            .update({
+                videos_watched_count: newCount,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('user_id', userId)
+            .select('videos_watched_count')
+            .single();
+
+        if (error) {
+            return errorResponse(res, 'Failed to increment count', 500, error);
+        }
+
+        return successResponse(res, 'Count incremented', { videos_watched_count: updated?.videos_watched_count });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to increment count';
         return errorResponse(res, message, 400);
     }
 });

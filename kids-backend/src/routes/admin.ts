@@ -193,44 +193,7 @@ router.put('/orders/:id/status', authenticateUser, requireAdmin, async (req: Req
 });
 
 // ─── BADGE MANAGEMENT ────────────────────────────────────────────────────────
-
-/**
- * @swagger
- * /api/admin/users/{id}/badges:
- *   post:
- *     summary: Award badge to a user (Admin only)
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- */
-router.post('/users/:id/badges', authenticateUser, requireAdmin, async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { badge } = z.object({ badge: z.string().min(1) }).parse(req.body);
-
-        const { data: profile } = await supabase.from('profiles').select('badges').eq('id', id).single();
-        const currentBadges: string[] = Array.isArray(profile?.badges) ? profile.badges : [];
-
-        if (currentBadges.includes(badge)) {
-            return errorResponse(res, 'User already has this badge', 400);
-        }
-
-        const newBadges = [...currentBadges, badge];
-        const { data: updated, error } = await supabase
-            .from('profiles')
-            .update({ badges: newBadges, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error) return errorResponse(res, 'Failed to award badge', 500, error);
-
-        return successResponse(res, 'Badge awarded', updated);
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Failed to award badge';
-        return errorResponse(res, message, 400);
-    }
-});
+// Note: Manual badge awarding has been removed. Badges are now earned through gameplay.
 
 
 /**

@@ -18,6 +18,7 @@ export interface User {
   avatar?: string;
   screenTimeLimit: number;
   totalWatchTime: number;
+  videos_watched_count: number;
   points: number;
   badges: string[];
   hasPinSet: boolean;
@@ -65,12 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (supabaseUser: SupabaseUser) => {
     try {
-      // Fetch profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, videos_watched_count")
         .eq("user_id", supabaseUser.id)
         .maybeSingle();
+
+      const profileData = profile as any;
 
       // Fetch role
       const { data: roleData } = await supabase
@@ -83,14 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: supabaseUser.id,
         email: supabaseUser.email || "",
         name:
-          profile?.display_name || supabaseUser.email?.split("@")[0] || "User",
+          profileData?.display_name || supabaseUser.email?.split("@")[0] || "User",
         role: (roleData?.role as UserRole) || "parent",
-        avatar: profile?.avatar_url,
-        screenTimeLimit: profile?.screen_time_limit || 60,
-        totalWatchTime: profile?.total_watch_time || 0,
-        points: profile?.points || 0,
-        badges: profile?.badges || [],
-        hasPinSet: !!profile?.pin_hash,
+        avatar: profileData?.avatar_url,
+        screenTimeLimit: profileData?.screen_time_limit || 60,
+        totalWatchTime: profileData?.total_watch_time || 0,
+        videos_watched_count: profileData?.videos_watched_count || 0,
+        points: profileData?.points || 0,
+        badges: profileData?.badges || [],
+        hasPinSet: !!profileData?.pin_hash,
       };
 
       setUser(userData);
@@ -127,6 +130,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Screen Time Countdown Logic
+  useEffect(() => {
+    if (!user || user.role === 'admin') return; // Admins don't have limits
+
+    const checkLimit = () => {
+      const remaining = user.screenTimeLimit - user.totalWatchTime;
+      if (remaining <= 0) {
+        alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
+        logout();
+      }
+    };
+
+    // Check immediately on mount/user change
+    checkLimit();
+
+    // Set up interval to increment watch time every minute and check limit
+    const interval = setInterval(async () => {
+      try {
+        // Increment watch time in backend
+        const { error } = await supabase
+          .from("profiles")
+          .update({ 
+            total_watch_time: user.totalWatchTime + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id);
+
+        if (!error) {
+          // Update local state
+          const newTotal = user.totalWatchTime + 1;
+          setUser({ ...user, totalWatchTime: newTotal });
+          
+          if (newTotal >= user.screenTimeLimit) {
+            alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
+            logout();
+          }
+        }
+      } catch (err) {
+        console.error("Error updating screen time:", err);
+      }
+    }, 60000); // Every minute
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);

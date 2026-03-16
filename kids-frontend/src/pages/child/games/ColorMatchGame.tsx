@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
+import { useAuth } from "@/context/AuthContext";
+import { gamesApi } from "@/services/gamesApi";
+import { profilesApi } from "@/services/profilesApi";
 
 interface ColorOption {
   name: string;
@@ -28,6 +31,7 @@ const TOTAL_ROUNDS = 10;
 const POINTS_PER_CORRECT = 10;
 
 export default function ColorMatchGame() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,6 +43,7 @@ export default function ColorMatchGame() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [gameOver, setGameOver] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
 
   const generateRound = () => {
     const shuffled = [...colors].sort(() => Math.random() - 0.5);
@@ -65,11 +70,13 @@ export default function ColorMatchGame() {
     if (correct) {
       const bonusPoints = streak >= 3 ? POINTS_PER_CORRECT * 2 : POINTS_PER_CORRECT;
       setScore(score + bonusPoints);
-      setStreak(streak + 1);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setMaxStreak(prev => Math.max(prev, newStreak));
 
-      if (streak >= 2) {
+      if (newStreak >= 2) {
         toast({
-          title: `🔥 ${streak + 1}x Streak!`,
+          title: `🔥 ${newStreak}x Streak!`,
           description: "Double points earned!",
         });
       }
@@ -81,13 +88,7 @@ export default function ColorMatchGame() {
     setTimeout(() => {
       if (currentRound >= TOTAL_ROUNDS) {
         setGameOver(true);
-        if (score >= 70) {
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        }
+        handleGameOver();
       } else {
         setCurrentRound(currentRound + 1);
         generateRound();
@@ -95,10 +96,51 @@ export default function ColorMatchGame() {
     }, 1000);
   };
 
+  const handleGameOver = async () => {
+    if (score >= 70) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    }
+
+    // Log game activity and check for badges
+    try {
+      const response = await gamesApi.logActivity('color-match', {
+        child_id: user?.id || '', // In this project, profile id is used as child_id
+        score: score,
+        streak: maxStreak,
+        time_spent: 0 // Could add timer logic
+      });
+
+      if (response.newBadges && response.newBadges.length > 0) {
+        toast({
+          title: "🎉 Huy hiệu mới!",
+          description: `Bạn vừa đạt được: ${response.newBadges.join(', ')}`,
+          variant: "default",
+        });
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.5 },
+        });
+      }
+
+      // Add points to profile
+      if (score > 0) {
+        await profilesApi.addPoints(score);
+      }
+    } catch (error) {
+      console.error('Failed to log game activity:', error);
+    }
+  };
+
   const restartGame = () => {
     setCurrentRound(1);
     setScore(0);
     setStreak(0);
+    setMaxStreak(0);
     setGameOver(false);
     generateRound();
   };
@@ -147,7 +189,7 @@ export default function ColorMatchGame() {
               <RefreshCw className="w-5 h-5" />
               Play Again
             </Button>
-            <Button variant="outline" size="lg" onClick={() => navigate("/child/games")} className="gap-2">
+            <Button variant="outline" size="lg" onClick={() => navigate("/games")} className="gap-2">
               <Home className="w-5 h-5" />
               Back to Games
             </Button>
