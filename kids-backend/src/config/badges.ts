@@ -4,7 +4,7 @@ export interface Badge {
     emoji: string;
     desc: string;
     color: string;
-    condition: (activity: any) => boolean;
+    condition: (activity: any, currentBadges?: string[]) => boolean;
 }
 
 export const ALL_BADGES: Badge[] = [
@@ -30,15 +30,15 @@ export const ALL_BADGES: Badge[] = [
         emoji: '📚', 
         desc: 'Yêu thích đọc sách!', 
         color: 'from-blue-400 to-cyan-400',
-        condition: () => false // Placeholder
-    },
+        condition: (data) => (data.videos_watched_count ?? 0) >= 20
+    }, 
     { 
         id: '🎨 Creative Kid', 
         label: 'Creative Kid', 
         emoji: '🎨', 
         desc: 'Bé sáng tạo tuyệt vời!', 
         color: 'from-pink-400 to-fuchsia-500',
-        condition: () => false // Placeholder
+        condition: () => false // Placeholder — no earnable mechanic yet
     },
     { 
         id: '🏆 Top Scorer', 
@@ -71,5 +71,19 @@ export const ALL_BADGES: Badge[] = [
         desc: 'Hoàn thành Puzzle mức độ Khó!', 
         color: 'from-purple-600 to-pink-600',
         condition: (data) => data.game_type === 'puzzle' && data.level === 'hard'
-    }
+    },
+    {
+        id: '🌈 Rainbow Achiever',
+        label: 'Rainbow Achiever',
+        emoji: '🌈',
+        desc: 'Đạt được tất cả huy hiệu khác!',
+        color: 'from-red-400 via-yellow-400 to-blue-400',
+        condition: (data, currentBadges: string[] = []) => {
+            const otherBadgeIds = ALL_BADGES
+                .filter(b => b.id !== '🌈 Rainbow Achiever')
+                .map(b => b.id)
+                .filter(id => id !== '🎨 Creative Kid'); // exclude unobtainable placeholder
+            return otherBadgeIds.every(id => currentBadges.includes(id));
+        }
+    },
 ];

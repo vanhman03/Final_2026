@@ -30,6 +30,14 @@ export interface UpdateProfileRequest {
     screen_time_limit?: number;
 }
 
+export interface ScreenTimeStatus {
+    total_watch_time: number;
+    screen_time_limit: number;
+    screen_time_reset_at: string;
+    next_reset_at: string;
+    remaining_minutes: number;
+}
+
 export const profilesApi = {
     getProfile: () => api.get<Profile>('/api/profiles/me'),
 
@@ -49,4 +57,10 @@ export const profilesApi = {
 
     incrementVideoCount: () =>
         api.post<{ videos_watched_count: number }>('/api/profiles/me/increment-video-count'),
+
+    getScreenTimeStatus: () =>
+        api.get<ScreenTimeStatus>('/api/profiles/me/screen-time-status'),
+
+    resetWatchTime: () =>
+        api.post<ScreenTimeStatus>('/api/profiles/me/reset-watch-time', {}),
 };

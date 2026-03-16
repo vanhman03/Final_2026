@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Clock, Shield, TrendingUp, ArrowLeft, Gamepad2, Play,
-  KeyRound, Eye, EyeOff, Trophy, Star, BarChart3,
+  KeyRound, Eye, EyeOff, Trophy, Star, BarChart3, RefreshCw,
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useParentMode } from "@/context/ParentModeContext";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { gamesApi, GameActivity } from "@/services/gamesApi";
-import { profilesApi, ProfileStats } from "@/services/profilesApi";
+import { profilesApi, ProfileStats, ScreenTimeStatus } from "@/services/profilesApi";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,7 +27,7 @@ const GAME_TYPE_EMOJI: Record<string, string> = {
 };
 
 export default function ParentModePage() {
-  const { user, verifyPin, updatePin, refreshUserData } = useAuth();
+  const { user, verifyPin, updatePin, refreshUserData, pauseScreenTime, resumeScreenTime } = useAuth();
   const { isParentModeActive, deactivateParentMode } = useParentMode();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,6 +35,7 @@ export default function ParentModePage() {
   const [gameHistory, setGameHistory] = useState<GameActivity[]>([]);
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [nextResetAt, setNextResetAt] = useState<string | null>(null);
 
   const [showPinChange, setShowPinChange] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
@@ -43,23 +44,92 @@ export default function ParentModePage() {
   const [showPins, setShowPins] = useState(false);
   const [isChangingPin, setIsChangingPin] = useState(false);
 
+  // ── Screen-time limit local state ────────────────────────────────────────
+  // We keep a local copy so the input is responsive without firing an API call
+  // on every keystroke / arrow-click. The save is debounced (1000 ms).
+  const [limitInput, setLimitInput] = useState<number>(user?.screenTimeLimit ?? 60);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [limitDirty, setLimitDirty] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep local input in sync if the user object changes (e.g. after refreshUserData)
+  useEffect(() => {
+    if (!limitDirty) {
+      setLimitInput(user?.screenTimeLimit ?? 60);
+    }
+  }, [user?.screenTimeLimit]);
+
+  const saveLimit = useCallback(async (value: number) => {
+    if (isNaN(value) || value <= 0) return;
+    setIsSavingLimit(true);
+    try {
+      await profilesApi.updateProfile({ screen_time_limit: value });
+      await refreshUserData();
+      // Fetch updated next_reset_at from the server
+      try {
+        const status = await profilesApi.getScreenTimeStatus();
+        setNextResetAt(status.next_reset_at);
+      } catch { /* non-fatal */ }
+      setLimitDirty(false);
+      toast({ title: "Đã lưu", description: `Giới hạn thời gian: ${value} phút. Đồng hồ đếm mới bắt đầu.` });
+    } catch {
+      toast({ title: "Lỗi", description: "Không thể cập nhật giới hạn", variant: "destructive" });
+    } finally {
+      setIsSavingLimit(false);
+    }
+  }, [refreshUserData, toast]);
+
+  const handleReset = useCallback(async () => {
+    setIsResetting(true);
+    try {
+      const status = await profilesApi.resetWatchTime();
+      setNextResetAt(status.next_reset_at);
+      await refreshUserData();
+      toast({ title: "Đã đặt lại", description: "Thời gian xem đã được đặt về 0, đặt lại sau 24h." });
+    } catch {
+      toast({ title: "Lỗi", description: "Không thể đặt lại thời gian xem", variant: "destructive" });
+    } finally {
+      setIsResetting(false);
+    }
+  }, [refreshUserData, toast]);
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value);
+    if (isNaN(val)) return;
+    setLimitInput(val);
+    setLimitDirty(true);
+    // Debounce: wait 1000 ms of no typing before auto-saving
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveLimit(val), 1000);
+  };
+
+  // Clear debounce on unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+  // ─────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     if (!isParentModeActive) { navigate("/home"); return; }
+    // Pause the screen-time counter while the parent is in parent mode
+    pauseScreenTime();
     fetchData();
+    return () => { resumeScreenTime(); };
   }, [user, navigate, isParentModeActive]);
 
   const fetchData = async () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const [statsData, gamesData] = await Promise.allSettled([
+      const [statsData, gamesData, statusData] = await Promise.allSettled([
         profilesApi.getStats(),
         gamesApi.getActivities(undefined, undefined, 1, 10),
+        profilesApi.getScreenTimeStatus(),
       ]);
 
       if (statsData.status === 'fulfilled') setProfileStats(statsData.value);
       if (gamesData.status === 'fulfilled') setGameHistory(gamesData.value.activities || []);
+      if (statusData.status === 'fulfilled') setNextResetAt(statusData.value.next_reset_at);
     } catch (error) {
       console.error("Error fetching parent mode data:", error);
     } finally {
@@ -156,31 +226,40 @@ export default function ParentModePage() {
                 <Progress value={screenTimeProgress} className="h-3 rounded-full" />
                 <p className="text-xs text-muted-foreground mt-2">
                   {screenTimeProgress >= 100
-                    ? "⚠️ Đã đạt giới hạn thời gian hôm nay"
-                    : `✅ Còn ${Math.round((user?.screenTimeLimit || 60) - (user?.totalWatchTime || 0))} phút`}
+                    ? "Đã đạt giới hạn thời gian hôm nay"
+                    : `Còn ${Math.round((user?.screenTimeLimit || 60) - (user?.totalWatchTime || 0))} phút`}
                 </p>
+                {nextResetAt && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Tự động đặt lại lúc: {new Date(nextResetAt).toLocaleString('vi-VN')}
+                  </p>
+                )}
               </div>
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex flex-col gap-3 items-end justify-center">
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type="number" 
-                    value={user?.screenTimeLimit || 60} 
-                    onChange={async (e) => {
-                      const newLimit = parseInt(e.target.value);
-                      if (!isNaN(newLimit) && newLimit > 0) {
-                        try {
-                          await profilesApi.updateProfile({ screen_time_limit: newLimit });
-                          refreshUserData();
-                          toast({ title: "✅ Đã cập nhật", description: `Giới hạn thời gian mới: ${newLimit} phút` });
-                        } catch (err) {
-                          toast({ title: "Lỗi", description: "Không thể cập nhật giới hạn", variant: "destructive" });
-                        }
-                      }
-                    }}
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={limitInput}
+                    onChange={handleLimitChange}
                     className="w-24 rounded-xl"
                   />
                   <span className="text-sm font-medium">phút</span>
+                  {isSavingLimit && (
+                    <span className="text-xs text-muted-foreground">Đang lưu...</span>
+                  )}
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isResetting}
+                  onClick={handleReset}
+                  className="rounded-xl gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+                  {isResetting ? "Đang đặt lại..." : "Đặt lại thời gian"}
+                </Button>
               </div>
             </div>
           </motion.div>

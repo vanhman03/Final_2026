@@ -15,9 +15,11 @@ import FavoritesPage from "./pages/child/FavoritesPage";
 import GamesPage from "./pages/child/GamesPage";
 import ColorMatchGame from "./pages/child/games/ColorMatchGame";
 import PuzzleGame from "./pages/child/games/PuzzleGame";
+import LeaderboardPage from "./pages/child/LeaderboardPage";
 import ParentModePage from "./pages/ParentModePage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ShopPage from "./pages/shop/ShopPage";
+import PaymentResultPage from "./pages/shop/PaymentResultPage";
 import ResetPinPage from "./pages/auth/ResetPinPage";
 import BadgesPage from "./pages/BadgesPage";
 import NotFound from "./pages/NotFound";
@@ -45,6 +47,7 @@ const App = () => (
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/color-match" element={<ColorMatchGame />} />
               <Route path="/games/puzzle" element={<PuzzleGame />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
 
               {/* Parent Mode (PIN protected) */}
               <Route path="/parent-mode" element={<ParentModePage />} />
@@ -57,6 +60,7 @@ const App = () => (
 
               {/* Shop */}
               <Route path="/shop" element={<ShopPage />} />
+              <Route path="/payment/result" element={<PaymentResultPage />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

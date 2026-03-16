@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabase';
+import { supabase, supabaseAnon } from '../config/supabase';
 import { errorResponse } from '../utils/response';
 
 /**
@@ -18,7 +18,9 @@ declare global {
 }
 
 /**
- * Middleware to authenticate user via JWT token
+ * Middleware to authenticate user via JWT token.
+ * Uses the anon-key client for getUser() so that JWT claims are validated
+ * correctly (the service-role client skips standard JWT validation).
  */
 export async function authenticateUser(req: Request, res: Response, next: NextFunction) {
     try {
@@ -30,7 +32,7 @@ export async function authenticateUser(req: Request, res: Response, next: NextFu
 
         const token = authHeader.replace('Bearer ', '');
 
-        const { data, error } = await supabase.auth.getUser(token);
+        const { data, error } = await supabaseAnon.auth.getUser(token);
 
         if (error || !data.user) {
             return errorResponse(res, 'Invalid or expired token', 401);
@@ -88,7 +90,7 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
 
         const token = authHeader.replace('Bearer ', '');
 
-        const { data, error } = await supabase.auth.getUser(token);
+        const { data, error } = await supabaseAnon.auth.getUser(token);
 
         if (!error && data.user) {
             req.user = {
@@ -103,3 +105,4 @@ export async function optionalAuth(req: Request, res: Response, next: NextFuncti
         next();
     }
 }
+

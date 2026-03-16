@@ -34,17 +34,23 @@ export default function ShopPage() {
 
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: () => ordersApi.createOrder(
-      cart.map(item => ({ product_id: item.id, quantity: item.quantity }))
-    ),
-    onSuccess: (order) => {
+    mutationFn: async () => {
+      const order = await ordersApi.createOrder(
+        cart.map(item => ({ product_id: item.id, quantity: item.quantity }))
+      );
+      // Get VNPay redirect URL right after order creation
+      const { paymentUrl } = await ordersApi.createPaymentUrl(order.id);
+      return { order, paymentUrl };
+    },
+    onSuccess: ({ order, paymentUrl }) => {
       toast({
         title: 'Order created! 🎉',
         description: `Order #${order.id.slice(0, 8)} has been created. Redirecting to payment...`,
       });
       setCart([]);
       setIsCartOpen(false);
-      // TODO: Redirect to VNPay payment page
+      // Redirect browser to VNPay payment gateway
+      window.location.href = paymentUrl;
     },
     onError: (error) => {
       toast({

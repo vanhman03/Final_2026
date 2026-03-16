@@ -50,4 +50,7 @@ export const ordersApi = {
         api.post<Order>('/api/orders', { items }),
 
     cancelOrder: (id: string) => api.put<Order>(`/api/orders/${id}/cancel`),
+
+    createPaymentUrl: (orderId: string) =>
+        api.post<{ paymentUrl: string }>('/api/payment/vnpay/create', { order_id: orderId }),
 };

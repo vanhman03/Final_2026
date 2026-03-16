@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { adminApi, AdminStats } from '@/services/adminApi';
 import { productsApi } from '@/services/productsApi';
+import { videosApi } from '@/services/videosApi';
 import { Profile } from '@/services/profilesApi';
 import { Order } from '@/services/ordersApi';
 import { Product } from '@/services/productsApi';
@@ -31,9 +31,9 @@ const VIDEO_CATEGORIES = ['Alphabet', 'Numbers', 'Animals', 'Music', 'Science', 
 const PRODUCT_CATEGORIES = ['Toys', 'Books', 'Games', 'Stationery', 'Clothes', 'Electronics', 'Other'];
 
 const BADGE_OPTIONS = [
-  '🌟 Star Learner', '🎮 Game Master', '📚 Bookworm', '🎨 Creative Kid',
-  '🏆 Top Scorer', '⚡ Speed Reader', '🔢 Math Wizard', '🎵 Music Lover',
-  '🦁 Brave Explorer', '🌈 Rainbow Achiever',
+  '🌟 Star Learner', '🎮 Game Master', '📚 Bookworm',
+  '🏆 Top Scorer', '🔥 Color Streak Master',
+  '🧩 Puzzle Pro', '🧠 Puzzle Zen Master', '🌈 Rainbow Achiever',
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -120,8 +120,7 @@ export default function AdminDashboard() {
   const fetchVideos = useCallback(async () => {
     setIsVideoLoading(true);
     try {
-      const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
+      const { videos: data } = await videosApi.getVideos({ limit: 50 });
       setVideos(data || []);
     } catch { toast({ title: 'Lỗi', description: 'Không thể tải danh sách video.', variant: 'destructive' }); }
     finally { setIsVideoLoading(false); }
@@ -167,12 +166,21 @@ export default function AdminDashboard() {
     e.preventDefault();
     const youtubeId = extractYouTubeId(videoForm.youtubeUrl);
     if (!youtubeId) return toast({ title: 'URL không hợp lệ', description: 'Nhập YouTube URL hợp lệ.', variant: 'destructive' });
+    const payload = {
+      title: videoForm.title,
+      youtube_video_id: youtubeId,
+      youtube_url: videoForm.youtubeUrl,
+      age_group: videoForm.ageGroup,
+      category: videoForm.category,
+      duration: videoForm.duration,
+      thumbnail_emoji: videoForm.thumbnailEmoji,
+    };
     try {
       if (editingVideo) {
-        await supabase.from('videos').update({ title: videoForm.title, youtube_video_id: youtubeId, youtube_url: videoForm.youtubeUrl, age_group: videoForm.ageGroup, category: videoForm.category, duration: videoForm.duration, thumbnail_emoji: videoForm.thumbnailEmoji }).eq('id', editingVideo.id);
+        await videosApi.updateVideo(editingVideo.id, payload);
         toast({ title: '✅ Đã cập nhật video!' });
       } else {
-        await supabase.from('videos').insert({ title: videoForm.title, youtube_video_id: youtubeId, youtube_url: videoForm.youtubeUrl, age_group: videoForm.ageGroup, category: videoForm.category, duration: videoForm.duration, thumbnail_emoji: videoForm.thumbnailEmoji });
+        await videosApi.createVideo(payload);
         toast({ title: '🎬 Đã thêm video mới!' });
       }
       resetVideoForm(); fetchVideos();
@@ -182,7 +190,7 @@ export default function AdminDashboard() {
   const handleVideoDelete = async (id: string) => {
     if (!confirm('Xóa video này?')) return;
     try {
-      await supabase.from('videos').delete().eq('id', id);
+      await videosApi.deleteVideo(id);
       toast({ title: '🗑️ Đã xóa video' }); fetchVideos();
     } catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
   };

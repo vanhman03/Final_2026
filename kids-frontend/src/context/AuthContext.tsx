@@ -3,9 +3,11 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { api, invalidateAuthToken } from "@/services/api";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 export type UserRole = "admin" | "parent";
@@ -18,6 +20,8 @@ export interface User {
   avatar?: string;
   screenTimeLimit: number;
   totalWatchTime: number;
+  /** ISO timestamp of when the current 24-hour window started */
+  screenTimeResetAt: string | null;
   videos_watched_count: number;
   points: number;
   badges: string[];
@@ -55,6 +59,10 @@ interface AuthContextType {
   requestPinReset: (
     email: string,
   ) => Promise<{ success: boolean; error?: string }>;
+  /** Pause the per-minute screen-time counter (call when entering parent mode). */
+  pauseScreenTime: () => void;
+  /** Resume the per-minute screen-time counter (call when leaving parent mode). */
+  resumeScreenTime: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,8 +72,93 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Stable refs — updated synchronously alongside state, so interval
+  // closures always see the latest values without causing re-mounts.
+  const screenTimeLimitRef = useRef<number>(60);
+  const screenTimeResetAtRef = useRef<string | null>(null);
+  const userRoleRef = useRef<UserRole | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pausedRef = useRef<boolean>(false);
+
+  /** Pause the screen-time counter without stopping the interval. */
+  const pauseScreenTime = () => { pausedRef.current = true; };
+
+  /** Resume the screen-time counter. */
+  const resumeScreenTime = () => { pausedRef.current = false; };
+
+  /** Start the per-minute screen-time interval for non-admin users. */
+  const startScreenTimeInterval = () => {
+    if (intervalRef.current) return; // already running
+    if (userRoleRef.current === 'admin') return; // admins are exempt
+
+    intervalRef.current = setInterval(async () => {
+      // Skip tick while parent mode is active — parent isn't consuming content
+      if (pausedRef.current) return;
+
+      try {
+        const result = await api.post<{ total_watch_time: number; screen_time_limit: number; screen_time_reset_at?: string }>(
+          '/api/profiles/me/increment-watch-time',
+          {}
+        );
+
+        const newTotal = result.total_watch_time;
+        // Update screen_time_limit from the server response so we always use
+        // the latest value (e.g. if the parent changed it mid-session).
+        const latestLimit = result.screen_time_limit ?? screenTimeLimitRef.current;
+        screenTimeLimitRef.current = latestLimit;
+        if (result.screen_time_reset_at) {
+          screenTimeResetAtRef.current = result.screen_time_reset_at;
+        }
+
+        setUser(prev => prev ? {
+          ...prev,
+          totalWatchTime: newTotal,
+          screenTimeLimit: latestLimit,
+          screenTimeResetAt: result.screen_time_reset_at ?? prev.screenTimeResetAt,
+        } : prev);
+
+        if (newTotal >= latestLimit) {
+          alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
+          logout();
+        }
+      } catch (err) {
+        console.error("Error updating screen time:", err);
+      }
+    }, 60000); // every real minute
+  };
+
+  /** Stop the interval and clear the ref. */
+  const stopScreenTimeInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
   const fetchUserData = async (supabaseUser: SupabaseUser) => {
     try {
+      // Fetch screen-time status from backend first so the daily reset is applied
+      // before we load any stale total_watch_time from the profiles table.
+      let screenTimeStatusData: {
+        total_watch_time: number;
+        screen_time_limit: number;
+        screen_time_reset_at: string;
+        next_reset_at: string;
+        remaining_minutes: number;
+      } | null = null;
+
+      try {
+        screenTimeStatusData = await api.get<{
+          total_watch_time: number;
+          screen_time_limit: number;
+          screen_time_reset_at: string;
+          next_reset_at: string;
+          remaining_minutes: number;
+        }>('/api/profiles/me/screen-time-status');
+      } catch {
+        // Non-fatal — fall back to profile data below
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("*, videos_watched_count")
@@ -81,15 +174,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("user_id", supabaseUser.id)
         .maybeSingle();
 
+      const role = (roleData?.role as UserRole) || "parent";
+      const screenTimeLimit = screenTimeStatusData?.screen_time_limit ?? profileData?.screen_time_limit ?? 60;
+      const totalWatchTime = screenTimeStatusData?.total_watch_time ?? profileData?.total_watch_time ?? 0;
+      const screenTimeResetAt = screenTimeStatusData?.screen_time_reset_at ?? profileData?.screen_time_reset_at ?? null;
+
+      // Keep refs in sync
+      screenTimeLimitRef.current = screenTimeLimit;
+      screenTimeResetAtRef.current = screenTimeResetAt;
+      userRoleRef.current = role;
+
       const userData: User = {
         id: supabaseUser.id,
         email: supabaseUser.email || "",
         name:
           profileData?.display_name || supabaseUser.email?.split("@")[0] || "User",
-        role: (roleData?.role as UserRole) || "parent",
+        role,
         avatar: profileData?.avatar_url,
-        screenTimeLimit: profileData?.screen_time_limit || 60,
-        totalWatchTime: profileData?.total_watch_time || 0,
+        screenTimeLimit,
+        totalWatchTime,
+        screenTimeResetAt,
         videos_watched_count: profileData?.videos_watched_count || 0,
         points: profileData?.points || 0,
         badges: profileData?.badges || [],
@@ -97,6 +201,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(userData);
+
+      // Start the screen-time interval once user data is loaded (idempotent).
+      if (role !== 'admin') {
+        startScreenTimeInterval();
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -116,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setUser(null);
+        stopScreenTimeInterval();
       }
     });
 
@@ -128,53 +238,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Screen Time Countdown Logic
-  useEffect(() => {
-    if (!user || user.role === 'admin') return; // Admins don't have limits
-
-    const checkLimit = () => {
-      const remaining = user.screenTimeLimit - user.totalWatchTime;
-      if (remaining <= 0) {
-        alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
-        logout();
-      }
+    return () => {
+      subscription.unsubscribe();
+      stopScreenTimeInterval();
     };
-
-    // Check immediately on mount/user change
-    checkLimit();
-
-    // Set up interval to increment watch time every minute and check limit
-    const interval = setInterval(async () => {
-      try {
-        // Increment watch time in backend
-        const { error } = await supabase
-          .from("profiles")
-          .update({ 
-            total_watch_time: user.totalWatchTime + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq("user_id", user.id);
-
-        if (!error) {
-          // Update local state
-          const newTotal = user.totalWatchTime + 1;
-          setUser({ ...user, totalWatchTime: newTotal });
-          
-          if (newTotal >= user.screenTimeLimit) {
-            alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
-            logout();
-          }
-        }
-      } catch (err) {
-        console.error("Error updating screen time:", err);
-      }
-    }, 60000); // Every minute
-
-    return () => clearInterval(interval);
-  }, [user]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -287,6 +355,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    stopScreenTimeInterval();
+    invalidateAuthToken();
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -402,6 +472,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatePin,
         refreshUserData,
         requestPinReset,
+        pauseScreenTime,
+        resumeScreenTime,
       }}
     >
       {children}

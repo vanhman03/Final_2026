@@ -94,10 +94,9 @@ export default function GamesPage() {
   });
 
   const stats = statsData || { totalGames: 0, totalTimeSpent: 0, byGameType: {} };
-  const totalPoints = Object.values(stats.byGameType).reduce(
-    (sum, gameStat) => sum + (gameStat?.totalScore || 0), 0
-  );
-  const badgesEarned = Math.floor(totalPoints / 200); // Simple badge calculation
+  // Use real values from the user profile instead of estimates
+  const badgesEarned = user?.badges?.length ?? 0;
+  const totalPoints = user?.points ?? 0;
 
   return (
     <Layout>

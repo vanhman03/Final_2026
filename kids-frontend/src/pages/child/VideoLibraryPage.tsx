@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
-const ageGroups = ['All Ages', '3-5', '5-8', '8-12'];
+const ageGroups = ['All Ages', '0-3', '3-6', '6-9', '9-12'];
 
 export default function VideoLibraryPage() {
   const { user, refreshUserData } = useAuth();

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { authenticateUser } from '../middleware/auth';
 import { supabase } from '../config/supabase';
 import { vnpayWebhookSchema } from '../utils/validators';
 import { successResponse, errorResponse } from '../utils/response';
@@ -80,6 +81,158 @@ router.post('/webhook', async (req: Request, res: Response) => {
         console.error('Webhook error:', error);
         const message = error instanceof Error ? error.message : 'Internal server error';
         return errorResponse(res, message, 500);
+    }
+});
+
+/**
+ * @swagger
+ * /api/payment/vnpay/create:
+ *   post:
+ *     summary: Create a VNPay payment URL for an order
+ *     tags: [Payment]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [order_id]
+ *             properties:
+ *               order_id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: VNPay payment URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 paymentUrl:
+ *                   type: string
+ */
+router.post('/vnpay/create', authenticateUser, async (req: Request, res: Response) => {
+    try {
+        const { order_id } = req.body as { order_id?: string };
+        if (!order_id) return errorResponse(res, 'order_id is required', 400);
+
+        const userId = req.user?.id;
+
+        // Fetch the order to verify ownership and amount
+        const { data: order, error: fetchError } = await supabase
+            .from('orders')
+            .select('id, total_amount, payment_status, user_id')
+            .eq('id', order_id)
+            .single();
+
+        if (fetchError || !order) return errorResponse(res, 'Order not found', 404);
+        if (order.user_id !== userId) return errorResponse(res, 'Forbidden', 403);
+        if (order.payment_status !== 'pending') {
+            return errorResponse(res, `Order is already ${order.payment_status}`, 400);
+        }
+
+        const vnpTmnCode = process.env.VNPAY_TMN_CODE;
+        const vnpHashSecret = process.env.VNPAY_HASH_SECRET;
+        const vnpUrl = process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+        const returnUrl = process.env.VNPAY_RETURN_URL || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/callback`;
+
+        if (!vnpTmnCode || !vnpHashSecret) {
+            console.error('VNPay credentials not configured (VNPAY_TMN_CODE, VNPAY_HASH_SECRET)');
+            return errorResponse(res, 'Payment gateway not configured', 503);
+        }
+
+        // VNPay requires amount in VND * 100 (no decimal)
+        const amount = Math.round(order.total_amount * 100);
+        const txnRef = order.id.replace(/-/g, '').slice(0, 20); // max 20 chars, no hyphens
+        const createDate = new Date()
+            .toISOString()
+            .replace(/[-:T]/g, '')
+            .slice(0, 14); // YYYYMMDDHHmmss
+
+        // Store the txn ref on the order so the webhook can look it up
+        await supabase
+            .from('orders')
+            .update({ vnp_txn_ref: txnRef, updated_at: new Date().toISOString() })
+            .eq('id', order_id);
+
+        const params: Record<string, string> = {
+            vnp_Version: '2.1.0',
+            vnp_Command: 'pay',
+            vnp_TmnCode: vnpTmnCode,
+            vnp_Amount: String(amount),
+            vnp_CreateDate: createDate,
+            vnp_CurrCode: 'VND',
+            vnp_IpAddr: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1',
+            vnp_Locale: 'vn',
+            vnp_OrderInfo: `Thanh toan don hang ${txnRef}`,
+            vnp_OrderType: 'other',
+            vnp_ReturnUrl: returnUrl,
+            vnp_TxnRef: txnRef,
+        };
+
+        const sortedKeys = Object.keys(params).sort();
+        const signData = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+        const hmac = crypto.createHmac('sha512', vnpHashSecret);
+        hmac.update(signData);
+        const secureHash = hmac.digest('hex');
+
+        const urlParams = new URLSearchParams({ ...params, vnp_SecureHash: secureHash });
+        const paymentUrl = `${vnpUrl}?${urlParams.toString()}`;
+
+        return successResponse(res, 'Payment URL created', { paymentUrl });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Internal server error';
+        return errorResponse(res, message, 500);
+    }
+});
+
+/**
+ * @swagger
+ * /api/payment/vnpay/callback:
+ *   get:
+ *     summary: VNPay browser redirect callback
+ *     tags: [Payment]
+ *     security: []
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with payment result
+ */
+router.get('/vnpay/callback', async (req: Request, res: Response) => {
+    try {
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const query = req.query as Record<string, string>;
+
+        const isValid = await verifyVNPaySignature(query);
+        if (!isValid) {
+            return res.redirect(`${frontendUrl}/payment/result?status=error&message=invalid_signature`);
+        }
+
+        const txnRef = query.vnp_TxnRef;
+        const responseCode = query.vnp_ResponseCode;
+        const paymentStatus = responseCode === '00' ? 'completed' : 'failed';
+
+        const { data: order, error } = await supabase
+            .from('orders')
+            .update({
+                payment_status: paymentStatus,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('vnp_txn_ref', txnRef)
+            .select('id')
+            .single();
+
+        if (error || !order) {
+            return res.redirect(`${frontendUrl}/payment/result?status=error&message=order_not_found`);
+        }
+
+        return res.redirect(
+            `${frontendUrl}/payment/result?status=${paymentStatus}&order_id=${order.id}`
+        );
+    } catch (error: unknown) {
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        return res.redirect(`${frontendUrl}/payment/result?status=error`);
     }
 });
 

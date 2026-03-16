@@ -26,8 +26,26 @@ app.use(helmet({
 }));
 
 // CORS configuration
+// Allow a comma-separated list in FRONTEND_URL, plus common dev ports as fallback.
+const allowedOrigins: (string | RegExp)[] = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
+    : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081'];
+
+// Always include the standard dev ports so a mismatched .env never blocks requests.
+const devFallbacks = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081'];
+for (const fb of devFallbacks) {
+    if (!allowedOrigins.includes(fb)) allowedOrigins.push(fb);
+}
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (curl, Postman, server-to-server)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.some(o => (o instanceof RegExp ? o.test(origin) : o === origin))) {
+            return callback(null, true);
+        }
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
 }));
 
