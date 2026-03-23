@@ -52,9 +52,9 @@ export const ALL_BADGES: Badge[] = [
         id: '🔥 Color Streak Master', 
         label: 'Color Streak Master', 
         emoji: '🔥', 
-        desc: '10 chuỗi thắng liên tiếp trong Color Match!', 
+        desc: '8 chuỗi thắng liên tiếp trong Color Match!', 
         color: 'from-orange-500 to-red-600',
-        condition: (data) => data.game_type === 'color-match' && data.streak >= 10
+        condition: (data) => data.game_type === 'color-match' && data.streak >= 8
     },
     { 
         id: '🧩 Puzzle Pro', 

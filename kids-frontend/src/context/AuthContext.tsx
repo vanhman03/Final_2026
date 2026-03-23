@@ -9,6 +9,7 @@ import React, {
 import { supabase } from "@/integrations/supabase/client";
 import { api, invalidateAuthToken } from "@/services/api";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import { profilesApi } from "@/services/profilesApi";
 
 export type UserRole = "admin" | "parent";
 
@@ -356,6 +357,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     stopScreenTimeInterval();
+    
+    // Reset watch time when logging out so it's fresh for the next session
+    try {
+      await profilesApi.resetWatchTime();
+    } catch (err) {
+      console.error("Failed to reset watch time on logout:", err);
+    }
+    
     invalidateAuthToken();
     await supabase.auth.signOut();
     setUser(null);

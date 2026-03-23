@@ -13,7 +13,7 @@ const ALL_BADGES = [
     { id: '🎮 Game Master', label: 'Game Master', emoji: '🎮', desc: 'Bậc thầy trò chơi!', color: 'from-purple-400 to-indigo-500' },
     { id: '📚 Bookworm', label: 'Bookworm', emoji: '📚', desc: 'Yêu thích đọc sách!', color: 'from-blue-400 to-cyan-400' },
     { id: '🏆 Top Scorer', label: 'Top Scorer', emoji: '🏆', desc: 'Người ghi điểm cao nhất!', color: 'from-amber-400 to-yellow-500' },
-    { id: '🔥 Color Streak Master', label: 'Color Streak Master', emoji: '🔥', desc: '10 chuỗi thắng liên tiếp trong Color Match!', color: 'from-orange-500 to-red-600' },
+    { id: '🔥 Color Streak Master', label: 'Color Streak Master', emoji: '🔥', desc: '8 chuỗi thắng liên tiếp trong Color Match!', color: 'from-orange-500 to-red-600' },
     { id: '🧩 Puzzle Pro', label: 'Puzzle Pro', emoji: '🧩', desc: 'Hoàn thành Puzzle mức độ Trung bình!', color: 'from-blue-500 to-indigo-600' },
     { id: '🧠 Puzzle Zen Master', label: 'Puzzle Zen Master', emoji: '🧠', desc: 'Hoàn thành Puzzle mức độ Khó!', color: 'from-purple-600 to-pink-600' },
     { id: '🌈 Rainbow Achiever', label: 'Rainbow Achiever', emoji: '🌈', desc: 'Hoàn thành mọi thử thách!', color: 'from-violet-400 to-pink-500' },

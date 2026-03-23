@@ -46,12 +46,12 @@ export default function ParentModePage() {
 
   // ── Screen-time limit local state ────────────────────────────────────────
   // We keep a local copy so the input is responsive without firing an API call
-  // on every keystroke / arrow-click. The save is debounced (1000 ms).
+  // on every keystroke / arrow-click.
   const [limitInput, setLimitInput] = useState<number>(user?.screenTimeLimit ?? 60);
   const [isSavingLimit, setIsSavingLimit] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [limitDirty, setLimitDirty] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isEditingLimit, setIsEditingLimit] = useState(false);
 
   // Keep local input in sync if the user object changes (e.g. after refreshUserData)
   useEffect(() => {
@@ -96,16 +96,21 @@ export default function ParentModePage() {
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
-    if (isNaN(val)) return;
+    if (isNaN(val) || val < 1) return;
     setLimitInput(val);
     setLimitDirty(true);
-    // Debounce: wait 1000 ms of no typing before auto-saving
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => saveLimit(val), 1000);
   };
 
-  // Clear debounce on unmount
-  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+  const submitLimit = () => {
+    saveLimit(limitInput);
+    setIsEditingLimit(false);
+  };
+
+  const cancelLimit = () => {
+    setLimitInput(user?.screenTimeLimit ?? 60);
+    setIsEditingLimit(false);
+    setLimitDirty(false);
+  };
   // ─────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -236,20 +241,34 @@ export default function ParentModePage() {
                 )}
               </div>
               <div className="flex flex-col gap-3 items-end justify-center">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={1440}
-                    value={limitInput}
-                    onChange={handleLimitChange}
-                    className="w-24 rounded-xl"
-                  />
-                  <span className="text-sm font-medium">phút</span>
-                  {isSavingLimit && (
-                    <span className="text-xs text-muted-foreground">Đang lưu...</span>
-                  )}
-                </div>
+                {isEditingLimit ? (
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={1440}
+                        value={limitInput}
+                        onChange={handleLimitChange}
+                        className="w-24 rounded-xl"
+                      />
+                      <span className="text-sm font-medium">phút</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={cancelLimit}>Hủy</Button>
+                      <Button size="sm" className="rounded-xl h-8 bg-blue-500 hover:bg-blue-600 text-white" onClick={submitLimit} disabled={isSavingLimit}>
+                        {isSavingLimit ? "Đang lưu..." : "Xác nhận"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Giới hạn: {user?.screenTimeLimit || 60} phút</span>
+                    <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={() => setIsEditingLimit(true)}>
+                      Đổi thời gian
+                    </Button>
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
