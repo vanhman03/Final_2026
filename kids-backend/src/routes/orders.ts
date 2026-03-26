@@ -256,7 +256,7 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
             return errorResponse(res, 'Failed to create order items', 500, itemsError);
         }
 
-        const { data: completeOrder } = await supabase
+        const { data: completeOrder, error: completeError } = await supabase
             .from('orders')
             .select(`
                 *,
@@ -270,6 +270,13 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
             .eq('id', order.id)
             .single();
 
+        if (completeError) {
+            console.error('Error fetching complete order details:', completeError);
+            // Fallback to minimal order if detailed select fails
+            return successResponse(res, 'Order created (minimal)', order, 201);
+        }
+
+        console.log('Order created successfully:', completeOrder.id);
         return successResponse(res, 'Order created', completeOrder, 201);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to create order';

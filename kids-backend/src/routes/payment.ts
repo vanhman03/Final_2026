@@ -173,12 +173,20 @@ router.post('/vnpay/create', authenticateUser, async (req: Request, res: Respons
         };
 
         const sortedKeys = Object.keys(params).sort();
-        const signData = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+        const signData = sortedKeys
+            .map(k => `${k}=${encodeURIComponent(params[k]).replace(/%20/g, '+')}`)
+            .join('&');
+        
         const hmac = crypto.createHmac('sha512', vnpHashSecret);
-        hmac.update(signData);
+        hmac.update(Buffer.from(signData, 'utf-8'));
         const secureHash = hmac.digest('hex');
 
-        const urlParams = new URLSearchParams({ ...params, vnp_SecureHash: secureHash });
+        const urlParams = new URLSearchParams();
+        for (const k of sortedKeys) {
+            urlParams.append(k, params[k]);
+        }
+        urlParams.append('vnp_SecureHash', secureHash);
+        
         const paymentUrl = `${vnpUrl}?${urlParams.toString()}`;
 
         return successResponse(res, 'Payment URL created', { paymentUrl });
@@ -201,7 +209,8 @@ router.post('/vnpay/create', authenticateUser, async (req: Request, res: Respons
  */
 router.get('/vnpay/callback', async (req: Request, res: Response) => {
     try {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = rawFrontendUrl.split(',')[0].trim();
         const query = req.query as Record<string, string>;
 
         const isValid = await verifyVNPaySignature(query);
@@ -211,6 +220,7 @@ router.get('/vnpay/callback', async (req: Request, res: Response) => {
 
         const txnRef = query.vnp_TxnRef;
         const responseCode = query.vnp_ResponseCode;
+        // Status '00' is success in VNPay
         const paymentStatus = responseCode === '00' ? 'completed' : 'failed';
 
         const { data: order, error } = await supabase
@@ -224,6 +234,7 @@ router.get('/vnpay/callback', async (req: Request, res: Response) => {
             .single();
 
         if (error || !order) {
+            console.error('Order not found during VNPay callback:', txnRef);
             return res.redirect(`${frontendUrl}/payment/result?status=error&message=order_not_found`);
         }
 
@@ -231,7 +242,9 @@ router.get('/vnpay/callback', async (req: Request, res: Response) => {
             `${frontendUrl}/payment/result?status=${paymentStatus}&order_id=${order.id}`
         );
     } catch (error: unknown) {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        console.error('Callback error:', error);
+        const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = rawFrontendUrl.split(',')[0].trim();
         return res.redirect(`${frontendUrl}/payment/result?status=error`);
     }
 });
@@ -244,14 +257,20 @@ async function verifyVNPaySignature(data: Record<string, string>): Promise<boole
     }
 
     const receivedSignature = data.vnp_SecureHash;
+    if (!receivedSignature) return false;
+
     const dataToVerify = { ...data };
     delete dataToVerify.vnp_SecureHash;
+    delete dataToVerify.vnp_SecureHashType; // Also remove hash type if present
 
-    const sortedKeys = Object.keys(dataToVerify).sort();
-    const signData = sortedKeys.map(key => `${key}=${dataToVerify[key]}`).join('&');
+    const sortedKeys = Object.keys(dataToVerify)
+        .filter(key => key.startsWith('vnp_') && dataToVerify[key] !== '') // Only hash vnp_ params that are not empty
+        .sort();
+    
+    const signData = sortedKeys.map(key => `${key}=${encodeURIComponent(dataToVerify[key]).replace(/%20/g, '+')}`).join('&');
 
     const hmac = crypto.createHmac('sha512', hashSecret);
-    hmac.update(signData);
+    hmac.update(Buffer.from(signData, 'utf-8'));
     const signatureHex = hmac.digest('hex');
 
     return signatureHex.toLowerCase() === receivedSignature.toLowerCase();
