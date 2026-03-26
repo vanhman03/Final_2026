@@ -73,8 +73,6 @@ export function Navbar() {
     if (user.role === "admin") {
       return [
         { label: "Dashboard", icon: Home, href: "/admin/dashboard" },
-        { label: "Videos", icon: Play, href: "/admin/videos" },
-        { label: "Settings", icon: Settings, href: "/admin/settings" },
       ];
     }
 

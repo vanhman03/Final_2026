@@ -14,8 +14,14 @@ export interface AdminStats {
     recentOrders: Order[];
 }
 
+export interface AdminUserProfile extends Profile {
+    email?: string;
+    email_confirmed_at?: string | null;
+    banned_until?: string | null;
+}
+
 export interface UsersResponse {
-    users: Profile[];
+    users: AdminUserProfile[];
     pagination: {
         page: number;
         limit: number;
@@ -55,14 +61,11 @@ export const adminApi = {
         return api.get<UsersResponse>(`/api/admin/users?${params}`);
     },
 
-    updateUser: (id: string, data: UpdateUserRequest) =>
-        api.put<Profile>(`/api/admin/users/${id}`, data),
+    updateUserStatus: (id: string, status: 'active' | 'inactive') =>
+        api.put<{ message: string }>(`/api/admin/users/${id}/status`, { status }),
 
     deleteUser: (id: string) =>
         api.delete<null>(`/api/admin/users/${id}`),
-
-    awardBadge: (id: string, badge: string) =>
-        api.post<Profile>(`/api/admin/users/${id}/badges`, { badge }),
 
     // Orders
     getAllOrders: (page = 1, limit = 20, status?: string) => {

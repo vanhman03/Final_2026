@@ -28,6 +28,7 @@ router.get('/users', authenticateUser, requireAdmin, async (req: Request, res: R
         const limitNum = parseInt(limit as string, 10);
         const offset = (pageNum - 1) * limitNum;
 
+        // Fetch paginated profiles
         let query = supabase
             .from('profiles')
             .select('*', { count: 'exact' })
@@ -43,8 +44,24 @@ router.get('/users', authenticateUser, requireAdmin, async (req: Request, res: R
 
         if (error) return errorResponse(res, 'Failed to fetch users', 500, error);
 
+        // Enrich profiles with auth status (email_confirmed_at, banned_until)
+        const enrichedProfiles = await Promise.all(
+            (profiles || []).map(async (profile) => {
+                let authData = { email_confirmed_at: null, banned_until: null, email: '' };
+                if (profile.user_id) {
+                    const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
+                    if (user) {
+                        authData.email_confirmed_at = (user as any).email_confirmed_at || null;
+                        authData.banned_until = (user as any).banned_until || null;
+                        authData.email = user.email || '';
+                    }
+                }
+                return { ...profile, ...authData };
+            })
+        );
+
         return successResponse(res, 'Users retrieved', {
-            users: profiles,
+            users: enrichedProfiles,
             pagination: {
                 page: pageNum,
                 limit: limitNum,
@@ -76,31 +93,45 @@ router.get('/users', authenticateUser, requireAdmin, async (req: Request, res: R
  *       200:
  *         description: User updated
  */
-router.put('/users/:id', authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+router.put('/users/:id/status', authenticateUser, requireAdmin, async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const updateSchema = z.object({
-            display_name: z.string().min(1).max(100).optional(),
-            avatar_url: z.string().optional(),
-            screen_time_limit: z.number().min(0).max(1440).optional(),
-            points: z.number().min(0).optional(),
-            badges: z.array(z.string()).optional(),
-        });
+        const { id } = req.params; // this is the profiles.id
+        const { status } = z.object({
+            status: z.enum(['active', 'inactive']),
+        }).parse(req.body);
 
-        const updates = updateSchema.parse(req.body);
-
-        const { data: profile, error } = await supabase
+        // Fetch the profile to get the auth user_id
+        const { data: profile, error: profileErr } = await supabase
             .from('profiles')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .select('user_id')
             .eq('id', id)
-            .select()
             .single();
 
-        if (error) return errorResponse(res, 'Failed to update user', 500, error);
+        if (profileErr || !profile?.user_id) {
+            return errorResponse(res, 'User profile not found', 404);
+        }
 
-        return successResponse(res, 'User updated', profile);
+        const userId = profile.user_id;
+        
+        // Update Supabase Auth user
+        if (status === 'active') {
+            // Confirm email and unban
+            const { error } = await supabase.auth.admin.updateUserById(userId, {
+                email_confirm: true,
+                ban_duration: 'none'
+            });
+            if (error) return errorResponse(res, 'Failed to activate user', 500, error);
+        } else {
+            // Ban user for a long time (100 years = 876000h)
+            const { error } = await supabase.auth.admin.updateUserById(userId, {
+                ban_duration: '876000h'
+            });
+            if (error) return errorResponse(res, 'Failed to deactivate user', 500, error);
+        }
+
+        return successResponse(res, `User marked as ${status}`);
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Failed to update user';
+        const message = error instanceof Error ? error.message : 'Failed to update user status';
         return errorResponse(res, message, 400);
     }
 });

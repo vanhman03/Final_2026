@@ -17,10 +17,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { adminApi, AdminStats } from '@/services/adminApi';
+import { adminApi, AdminStats, AdminUserProfile } from '@/services/adminApi';
 import { productsApi } from '@/services/productsApi';
 import { videosApi } from '@/services/videosApi';
-import { Profile } from '@/services/profilesApi';
 import { Order } from '@/services/ordersApi';
 import { Product } from '@/services/productsApi';
 
@@ -66,8 +65,8 @@ const TABS: { id: TabId; label: string; icon: React.ElementType; emoji: string; 
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 interface VideoItem {
-  id: string; title: string; youtube_video_id: string; youtube_url: string | null;
-  age_group: string; category: string; duration: string; thumbnail_emoji: string | null; created_at: string;
+  id: string; title: string; youtube_video_id: string; youtube_url?: string | null;
+  age_group: string; category: string; duration: string; thumbnail_emoji?: string | null; created_at?: string;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -100,14 +99,9 @@ export default function AdminDashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
 
   // Users state
-  const [users, setUsers] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<AdminUserProfile[]>([]);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [userSearch, setUserSearch] = useState('');
-  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [userForm, setUserForm] = useState({ display_name: '', points: '', screen_time_limit: '' });
-  const [isBadgeDialogOpen, setIsBadgeDialogOpen] = useState(false);
-  const [badgeTargetUser, setBadgeTargetUser] = useState<Profile | null>(null);
 
   // ─── Fetching ────────────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
@@ -237,32 +231,19 @@ export default function AdminDashboard() {
   };
 
   // ─── User Handlers ────────────────────────────────────────────────────────────
-  const handleUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
+  const handleUserStatusToggle = async (id: string, currentIsActive: boolean) => {
     try {
-      await adminApi.updateUser(editingUser.id, {
-        display_name: userForm.display_name || undefined,
-        points: userForm.points ? parseInt(userForm.points) : undefined,
-        screen_time_limit: userForm.screen_time_limit ? parseInt(userForm.screen_time_limit) : undefined,
-      });
-      toast({ title: '✅ Đã cập nhật người dùng!' });
-      setIsUserDialogOpen(false); fetchUsers();
-    } catch { toast({ title: 'Lỗi khi cập nhật', variant: 'destructive' }); }
+      const newStatus = currentIsActive ? 'inactive' : 'active';
+      await adminApi.updateUserStatus(id, newStatus);
+      toast({ title: `✅ Đã chuyển sang ${newStatus === 'active' ? 'Active' : 'Inactive'}!` });
+      fetchUsers();
+    } catch { toast({ title: 'Lỗi khi cập nhật trạng thái', variant: 'destructive' }); }
   };
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm('Xóa người dùng này? Hành động không thể hoàn tác.')) return;
     try { await adminApi.deleteUser(id); toast({ title: '🗑️ Đã xóa người dùng' }); fetchUsers(); }
     catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
-  };
-
-  const handleAwardBadge = async (badge: string) => {
-    if (!badgeTargetUser) return;
-    try {
-      await adminApi.awardBadge(badgeTargetUser.id, badge);
-      toast({ title: '🏆 Đã trao huy hiệu!' }); setIsBadgeDialogOpen(false); fetchUsers();
-    } catch (err: any) { toast({ title: err.message || 'Lỗi', variant: 'destructive' }); }
   };
 
   // ─── Filtered data ────────────────────────────────────────────────────────────
@@ -408,14 +389,18 @@ export default function AdminDashboard() {
                           className="bg-white dark:bg-card rounded-3xl shadow-md border border-border overflow-hidden group hover:shadow-xl transition-shadow">
                           <div className="aspect-video bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-7xl relative">
                             {video.thumbnail_emoji || '📺'}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                              <a href={`https://youtube.com/watch?v=${video.youtube_video_id}`} target="_blank" rel="noopener noreferrer">
-                                <Button size="icon" variant="secondary" className="rounded-full"><Play className="w-4 h-4" /></Button>
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-all flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
+                              <a href={`https://youtube.com/watch?v=${video.youtube_video_id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                                <Button size="icon" className="rounded-full bg-orange-500 hover:bg-orange-600 border-none shadow-lg w-10 h-10">
+                                  <Play className="w-5 h-5 fill-white ml-0.5" />
+                                </Button>
                               </a>
-                              <Button size="icon" variant="secondary" className="rounded-full" onClick={() => { setEditingVideo(video); setVideoForm({ title: video.title, youtubeUrl: video.youtube_url || `https://youtube.com/watch?v=${video.youtube_video_id}`, ageGroup: video.age_group, category: video.category, duration: video.duration, thumbnailEmoji: video.thumbnail_emoji || '📺' }); setIsVideoDialogOpen(true); }}>
-                                <Edit className="w-4 h-4" />
+                              <Button size="icon" className="rounded-full bg-amber-500 hover:bg-amber-600 border-none shadow-lg w-10 h-10" onClick={() => { setEditingVideo(video); setVideoForm({ title: video.title, youtubeUrl: video.youtube_url || `https://youtube.com/watch?v=${video.youtube_video_id}`, ageGroup: video.age_group, category: video.category, duration: video.duration, thumbnailEmoji: video.thumbnail_emoji || '📺' }); setIsVideoDialogOpen(true); }}>
+                                <Edit className="w-5 h-5 text-white" />
                               </Button>
-                              <Button size="icon" variant="destructive" className="rounded-full" onClick={() => handleVideoDelete(video.id)}><Trash2 className="w-4 h-4" /></Button>
+                              <Button size="icon" variant="destructive" className="rounded-full shadow-lg w-10 h-10" onClick={() => handleVideoDelete(video.id)}>
+                                <Trash2 className="w-5 h-5" />
+                              </Button>
                             </div>
                           </div>
                           <div className="p-4">
@@ -573,73 +558,45 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
 
-                  {/* Award badge dialog */}
-                  <Dialog open={isBadgeDialogOpen} onOpenChange={setIsBadgeDialogOpen}>
-                    <DialogContent className="max-w-sm rounded-3xl">
-                      <DialogHeader><DialogTitle>🏆 Trao Huy Hiệu cho {badgeTargetUser?.display_name}</DialogTitle></DialogHeader>
-                      <div className="grid grid-cols-2 gap-2 mt-3">
-                        {BADGE_OPTIONS.map(badge => (
-                          <button key={badge} onClick={() => handleAwardBadge(badge)}
-                            className="p-3 bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 rounded-2xl text-sm font-semibold text-left hover:shadow-md hover:scale-105 transition-all dark:from-orange-900/20 dark:to-yellow-900/20">
-                            {badge}
-                          </button>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Edit user dialog */}
-                  <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-                    <DialogContent className="max-w-md rounded-3xl">
-                      <DialogHeader><DialogTitle>✏️ Sửa Thông tin Người dùng</DialogTitle></DialogHeader>
-                      <form onSubmit={handleUserSubmit} className="space-y-4 mt-2">
-                        <div><Label>Tên hiển thị</Label><Input value={userForm.display_name} onChange={e => setUserForm(f => ({ ...f, display_name: e.target.value }))} className="mt-1 rounded-xl" /></div>
-                        <div><Label>Điểm thưởng</Label><Input type="number" min="0" value={userForm.points} onChange={e => setUserForm(f => ({ ...f, points: e.target.value }))} className="mt-1 rounded-xl" /></div>
-                        <div><Label>Giới hạn thời gian xem (phút/ngày)</Label><Input type="number" min="0" max="1440" value={userForm.screen_time_limit} onChange={e => setUserForm(f => ({ ...f, screen_time_limit: e.target.value }))} className="mt-1 rounded-xl" /></div>
-                        <div className="flex gap-3 pt-2">
-                          <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setIsUserDialogOpen(false)}>Hủy</Button>
-                          <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 text-white">Lưu</Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-
                   {isUserLoading ? (
                     <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="bg-card rounded-2xl h-20 animate-pulse" />)}</div>
                   ) : users.length > 0 ? (
                     <div className="space-y-4">
-                      {users.map((u, idx) => (
-                        <motion.div key={u.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * idx }}
-                          className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-300 to-amber-500 flex items-center justify-center text-2xl font-bold text-white shadow">
-                              {u.display_name?.[0]?.toUpperCase() || '👤'}
-                            </div>
-                            <div>
-                              <p className="font-bold">{u.display_name || 'Chưa đặt tên'}</p>
-                              <p className="text-xs text-muted-foreground font-mono">{u.user_id?.slice(0, 12)}...</p>
-                              <div className="flex items-center gap-3 mt-1">
-                                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">⭐ {u.points ?? 0} điểm</span>
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">🕐 {u.screen_time_limit ?? 60} phút/ngày</span>
-                                {Array.isArray(u.badges) && u.badges.length > 0 && (
-                                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">🏆 {u.badges.length} huy hiệu</span>
-                                )}
+                      {users.map((u, idx) => {
+                        const isActive = !!u.email_confirmed_at && !u.banned_until;
+                        return (
+                          <motion.div key={u.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * idx }}
+                            className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-300 to-amber-500 flex items-center justify-center text-2xl font-bold text-white shadow">
+                                {u.display_name?.[0]?.toUpperCase() || '👤'}
+                              </div>
+                              <div>
+                                <p className="font-bold flex items-center gap-2">
+                                  {u.display_name || 'Chưa đặt tên'}
+                                  <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {isActive ? 'Active' : 'Inactive'}
+                                  </span>
+                                </p>
+                                <p className="text-xs text-muted-foreground font-mono">{u.email || u.user_id?.slice(0, 12)}</p>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex gap-2 flex-wrap">
-                            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => { setBadgeTargetUser(u); setIsBadgeDialogOpen(true); }}>
-                              <Trophy className="w-3 h-3" /> Trao huy hiệu
-                            </Button>
-                            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => { setEditingUser(u); setUserForm({ display_name: u.display_name || '', points: String(u.points ?? 0), screen_time_limit: String(u.screen_time_limit ?? 60) }); setIsUserDialogOpen(true); }}>
-                              <Edit className="w-3 h-3" /> Sửa
-                            </Button>
-                            <Button size="sm" variant="destructive" className="rounded-xl gap-1 text-xs" onClick={() => handleDeleteUser(u.id)}>
-                              <Trash2 className="w-3 h-3" /> Xóa
-                            </Button>
-                          </div>
-                        </motion.div>
-                      ))}
+                            <div className="flex items-center gap-3">
+                              <label className="flex items-center cursor-pointer gap-2">
+                                <span className="text-sm font-semibold text-muted-foreground">{isActive ? 'Kích hoạt' : 'Vô hiệu'}</span>
+                                <div className="relative">
+                                  <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleUserStatusToggle(u.id, isActive)} />
+                                  <div className={`block w-10 h-6 rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                  <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isActive ? 'translate-x-4' : ''}`}></div>
+                                </div>
+                              </label>
+                              <Button size="sm" variant="destructive" className="rounded-xl gap-1 text-xs" onClick={() => handleDeleteUser(u.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-16"><div className="text-7xl mb-4">👥</div><p className="text-muted-foreground text-lg">Không tìm thấy người dùng nào</p></div>
