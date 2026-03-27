@@ -56,11 +56,11 @@ function extractYouTubeId(url: string): string | null {
 
 // ─── Tabs Config ──────────────────────────────────────────────────────────────
 type TabId = 'videos' | 'products' | 'orders' | 'users';
-const TABS: { id: TabId; label: string; icon: React.ElementType; emoji: string; color: string }[] = [
-  { id: 'videos', label: 'Videos', icon: Video, emoji: '🎬', color: 'from-purple-500 to-indigo-500' },
-  { id: 'products', label: 'Products', icon: ShoppingBag, emoji: '🛍️', color: 'from-pink-500 to-rose-500' },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart, emoji: '🛒', color: 'from-green-500 to-teal-500' },
-  { id: 'users', label: 'Users', icon: Users, emoji: '👥', color: 'from-orange-500 to-amber-500' },
+const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
+  { id: 'videos', label: 'Videos', icon: Video, color: 'from-purple-500 to-indigo-500' },
+  { id: 'products', label: 'Products', icon: ShoppingBag, color: 'from-pink-500 to-rose-500' },
+  { id: 'orders', label: 'Orders', icon: ShoppingCart, color: 'from-green-500 to-teal-500' },
+  { id: 'users', label: 'Users', icon: Users, color: 'from-orange-500 to-amber-500' },
 ];
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -315,7 +315,6 @@ export default function AdminDashboard() {
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-200 ${isActive ? `bg-gradient-to-r ${tab.color} text-white shadow-lg scale-105` : 'bg-white dark:bg-card text-muted-foreground hover:bg-muted border'}`}>
-                  <span>{tab.emoji}</span>
                   <Icon className="w-4 h-4" />
                   {tab.label}
                 </button>
