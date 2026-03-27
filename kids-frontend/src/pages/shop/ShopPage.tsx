@@ -29,7 +29,7 @@ export default function ShopPage() {
   // Fetch products from API
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: () => productsApi.getProducts({ in_stock: true, limit: 50 }),
+    queryFn: () => productsApi.getProducts({ limit: 50 }),
   });
 
   // Create order mutation
@@ -181,7 +181,7 @@ export default function ShopPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * index }}
                   whileHover={{ y: -8 }}
-                  className="bg-card rounded-3xl shadow-card border border-border overflow-hidden group"
+                  className={`bg-card rounded-3xl shadow-card border border-border overflow-hidden group transition-all duration-300 ${!product.in_stock ? 'opacity-60 grayscale' : ''}`}
                 >
                   <div className="aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center text-8xl p-8 relative">
                     {product.image_url ? (
@@ -201,12 +201,19 @@ export default function ShopPage() {
                     </p>
 
                     <Button
-                      variant="fun"
+                      variant={product.in_stock ? "fun" : "secondary"}
                       className="w-full gap-2"
                       onClick={() => addToCart(product)}
+                      disabled={!product.in_stock}
                     >
-                      <Plus className="w-4 h-4" />
-                      Add to Cart
+                      {product.in_stock ? (
+                        <>
+                          <Plus className="w-4 h-4" />
+                          Add to Cart
+                        </>
+                      ) : (
+                        'Hết hàng'
+                      )}
                     </Button>
                   </div>
                 </motion.div>

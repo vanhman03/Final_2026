@@ -30,3 +30,4 @@ build/
 
 # Agents
 .agents/
+skills-lock.json
