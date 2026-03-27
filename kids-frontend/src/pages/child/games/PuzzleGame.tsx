@@ -300,7 +300,7 @@ export default function PuzzleGame() {
                 className="text-center mb-6"
               >
                 <Button variant="hero" size="xl" onClick={initializeGame}>
-                  Start Game! 🎯
+                  Start Game! 
                 </Button>
               </motion.div>
             )}
@@ -426,7 +426,7 @@ export default function PuzzleGame() {
               className="mt-6 text-center text-muted-foreground"
             >
               <p className="text-sm">💡 Flip two cards at a time. If they match, they stay open!</p>
-              <p className="text-sm mt-1">Find all matching pairs to win. Try to use fewer moves! 🧠</p>
+              <p className="text-sm mt-1">Find all matching pairs to win. Try to use fewer moves! </p>
             </motion.div>
           </div>
         </div>

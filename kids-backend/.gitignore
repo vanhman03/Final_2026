@@ -27,3 +27,6 @@ node_modules/
 # Build outputs
 dist/
 build/
+
+# Agents
+.agents/

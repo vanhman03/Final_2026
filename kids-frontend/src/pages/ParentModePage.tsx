@@ -220,7 +220,7 @@ export default function ParentModePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="bg-white dark:bg-card rounded-3xl shadow-md border p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-500" /> ⏱️ Quản lý thời gian xem
+              <Clock className="w-5 h-5 text-blue-500" />  Quản lý thời gian xem
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
@@ -287,7 +287,7 @@ export default function ParentModePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="bg-white dark:bg-card rounded-3xl shadow-md border p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-indigo-500" /> 🔐 Cài đặt bảo mật
+              <KeyRound className="w-5 h-5 text-indigo-500" />  Cài đặt bảo mật
             </h2>
             {!showPinChange ? (
               <div className="flex items-center justify-between">
@@ -340,7 +340,7 @@ export default function ParentModePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               className="bg-white dark:bg-card rounded-3xl shadow-md border p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Gamepad2 className="w-5 h-5 text-purple-500" /> 🎮 Hoạt động chơi game gần đây
+                <Gamepad2 className="w-5 h-5 text-purple-500" />  Hoạt động chơi game gần đây
               </h2>
               {isLoading ? (
                 <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted rounded-2xl animate-pulse" />)}</div>
@@ -376,7 +376,7 @@ export default function ParentModePage() {
               className="bg-white dark:bg-card rounded-3xl shadow-md border p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" /> 🏆 Huy hiệu & Thành tích
+                  <Trophy className="w-5 h-5 text-yellow-500" />  Huy hiệu & Thành tích
                 </h2>
                 <Link to="/badges">
                   <Button variant="outline" size="sm" className="rounded-xl text-xs gap-1">

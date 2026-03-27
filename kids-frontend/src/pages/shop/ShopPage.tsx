@@ -189,10 +189,6 @@ export default function ShopPage() {
                     ) : (
                       '🎁'
                     )}
-                    <div className="absolute top-3 right-3 bg-card/90 px-2 py-1 rounded-lg flex items-center gap-1 text-sm">
-                      <Star className="w-4 h-4 text-warning fill-warning" />
-                      <span className="font-medium">4.8</span>
-                    </div>
                   </div>
 
                   <div className="p-5">
