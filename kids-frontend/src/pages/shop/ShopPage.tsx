@@ -8,6 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { productsApi, ordersApi, Product } from '@/services';
 import { useAuth } from '@/context/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 interface CartItem extends Product {
   quantity: number;
@@ -24,6 +32,7 @@ export default function ShopPage() {
   const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   // Fetch products from API
@@ -209,30 +218,40 @@ export default function ShopPage() {
                   whileHover={{ y: -8 }}
                   className={`bg-card rounded-3xl shadow-card border border-border overflow-hidden group transition-all duration-300 ${!product.in_stock ? 'opacity-60 grayscale' : ''}`}
                 >
-                  <div className="aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center text-8xl p-8 relative">
-                    {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
-                    ) : (
-                      '🎁'
-                    )}
-                    <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
-                      <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold shadow-sm backdrop-blur-sm ${product.in_stock ? 'bg-green-100/90 text-green-700 border border-green-200' : 'bg-red-100/90 text-red-700 border border-red-200'}`}>
-                        {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                  <div 
+                    className="cursor-pointer group-hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    <div className="aspect-square bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center text-8xl p-8 relative">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
+                      ) : (
+                        '🎁'
+                      )}
+                      <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
+                        <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold shadow-sm backdrop-blur-sm ${product.in_stock ? 'bg-green-100/90 text-green-700 border border-green-200' : 'bg-red-100/90 text-red-700 border border-red-200'}`}>
+                          {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                        </span>
+                        <span className="text-[10px] md:text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-bold shadow-sm border border-slate-200 backdrop-blur-sm">
+                          Số lượng: {product.stock ?? 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 pb-0">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                        {product.category || 'Toys'}
                       </span>
-                      <span className="text-[10px] md:text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-bold shadow-sm border border-slate-200 backdrop-blur-sm">
-                        Số lượng: {product.stock ?? 0}
-                      </span>
+                      <h3 className="font-bold text-lg mt-3 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                        {product.name}
+                      </h3>
+                      <p className="text-xl font-extrabold text-gradient-hero mb-0">
+                        {formatVND(product.price)}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="p-5">
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                      {product.category || 'Toys'}
-                    </span>
-                    <h3 className="font-bold text-lg mt-3 mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-xl font-extrabold text-gradient-hero mb-4">
-                      {formatVND(product.price)}
-                    </p>
+                  <div className="p-5 pt-4">
 
                     <Button
                       variant={product.in_stock ? "fun" : "secondary"}
@@ -380,6 +399,77 @@ export default function ShopPage() {
           </>
         )}
       </div>
+
+      {/* Product Detail Modal */}
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+        <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 gap-0 border-none">
+          {selectedProduct && (
+            <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-y-auto">
+              <div className="w-full md:w-1/2 bg-gradient-to-br from-primary/5 to-secondary/5 p-8 flex items-center justify-center text-9xl min-h-[300px]">
+                {selectedProduct.image_url ? (
+                  <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-full h-full object-contain drop-shadow-2xl" />
+                ) : (
+                  '🎁'
+                )}
+              </div>
+              <div className="w-full md:w-1/2 p-8 flex flex-col">
+                <DialogHeader className="text-left mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary pointer-events-none">
+                      {selectedProduct.category || 'Toys'}
+                    </Badge>
+                    <Badge variant="outline" className={selectedProduct.in_stock ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-500 border-red-200 bg-red-50'}>
+                      {selectedProduct.in_stock ? 'Còn hàng' : 'Hết hàng'}
+                    </Badge>
+                  </div>
+                  <DialogTitle className="text-2xl font-extrabold leading-tight mb-2">
+                    {selectedProduct.name}
+                  </DialogTitle>
+                  <p className="text-3xl font-black text-pink-500">
+                    {formatVND(selectedProduct.price)}
+                  </p>
+                </DialogHeader>
+
+                <div className="flex-1 space-y-6">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Mô tả sản phẩm</h4>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap italic">
+                      {selectedProduct.description || 'Không có mô tả cho sản phẩm này.'}
+                    </p>
+                  </div>
+
+                  <div className="bg-secondary/5 rounded-2xl p-4 border border-secondary/10 flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Số lượng có sẵn:</span>
+                    <span className="font-bold text-lg">{selectedProduct.stock} sản phẩm</span>
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <Button
+                    variant={selectedProduct.in_stock ? "hero" : "secondary"}
+                    size="xl"
+                    className="w-full gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95"
+                    onClick={() => {
+                      addToCart(selectedProduct);
+                      setSelectedProduct(null);
+                    }}
+                    disabled={!selectedProduct.in_stock}
+                  >
+                    {selectedProduct.in_stock ? (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Thêm vào giỏ hàng
+                      </>
+                    ) : (
+                      'Tạm hết hàng'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
