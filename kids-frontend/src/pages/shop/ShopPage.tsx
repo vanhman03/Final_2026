@@ -67,28 +67,54 @@ export default function ShopPage() {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
+        if (existing.quantity >= (product.stock ?? 0)) {
+          toast({
+            title: 'Hết hàng dự trữ ⚠️',
+            description: `Bạn đã thêm số lượng tối đa hiện có (${product.stock}).`,
+            variant: 'destructive',
+          });
+          return prev;
+        }
         return prev.map(item =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
+      if ((product.stock ?? 0) <= 0) {
+        toast({
+          title: 'Hết hàng ❌',
+          description: 'Sản phẩm này đã hết hàng.',
+          variant: 'destructive',
+        });
+        return prev;
+      }
       return [...prev, { ...product, quantity: 1 }];
     });
     toast({
-      title: 'Added to cart! 🛒',
-      description: `${product.name} has been added to your cart.`,
+      title: 'Đã thêm vào giỏ! 🛒',
+      description: `${product.name} đã được thêm vào giỏ hàng.`,
     });
   };
 
   const updateQuantity = (id: string, delta: number) => {
     setCart(prev =>
       prev
-        .map(item =>
-          item.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-            : item
-        )
+        .map(item => {
+          if (item.id === id) {
+            const newQuantity = item.quantity + delta;
+            if (delta > 0 && newQuantity > (item.stock ?? 0)) {
+              toast({
+                title: 'Không đủ hàng ⚠️',
+                description: `Sản phẩm này chỉ còn ${item.stock} trong kho.`,
+                variant: 'destructive',
+              });
+              return item;
+            }
+            return { ...item, quantity: Math.max(0, newQuantity) };
+          }
+          return item;
+        })
         .filter(item => item.quantity > 0)
     );
   };
@@ -189,6 +215,14 @@ export default function ShopPage() {
                     ) : (
                       '🎁'
                     )}
+                    <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
+                      <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold shadow-sm backdrop-blur-sm ${product.in_stock ? 'bg-green-100/90 text-green-700 border border-green-200' : 'bg-red-100/90 text-red-700 border border-red-200'}`}>
+                        {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                      </span>
+                      <span className="text-[10px] md:text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-bold shadow-sm border border-slate-200 backdrop-blur-sm">
+                        Số lượng: {product.stock ?? 0}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-5">
