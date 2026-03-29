@@ -14,7 +14,7 @@ const productSchema = z.object({
     image_url: z.string().url().optional(),
     category: z.string().optional(),
     age_group: z.string().optional(),
-    in_stock: z.boolean().default(true),
+    stock: z.number().int().min(0).default(0),
 });
 
 const productQuerySchema = z.object({

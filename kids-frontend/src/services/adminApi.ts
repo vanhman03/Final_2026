@@ -45,7 +45,7 @@ export interface CreateProductRequest {
     image_url?: string;
     category?: string;
     age_group?: string;
-    in_stock?: boolean;
+    stock?: number;
 }
 
 // ─── Admin API ───────────────────────────────────────────────────────────────

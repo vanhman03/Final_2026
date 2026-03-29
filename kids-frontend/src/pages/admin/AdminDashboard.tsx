@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   const [productSearch, setProductSearch] = useState('');
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', in_stock: true });
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', stock: 0 });
 
   // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   // ─── Product Handlers ─────────────────────────────────────────────────────────
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { name: productForm.name, description: productForm.description || undefined, price: parseFloat(productForm.price), image_url: productForm.image_url || undefined, category: productForm.category, age_group: productForm.age_group || undefined, in_stock: productForm.in_stock };
+    const payload = { name: productForm.name, description: productForm.description || undefined, price: parseFloat(productForm.price), image_url: productForm.image_url || undefined, category: productForm.category, age_group: productForm.age_group || undefined, stock: productForm.stock };
     try {
       if (editingProduct) {
         await adminApi.updateProduct(editingProduct.id, payload);
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
   };
 
   const resetProductForm = () => {
-    setProductForm({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', in_stock: true });
+    setProductForm({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', stock: 0 });
     setEditingProduct(null); setIsProductDialogOpen(false);
   };
 
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
                     </div>
                     <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button className="rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', in_stock: true }); }}>
+                        <Button className="rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', stock: 0 }); }}>
                           <Plus className="w-4 h-4" /> Thêm Sản phẩm
                         </Button>
                       </DialogTrigger>
@@ -449,9 +449,9 @@ export default function AdminDashboard() {
                             </Select>
                           </div>
                           <div><Label>URL Hình ảnh</Label><Input value={productForm.image_url} onChange={e => setProductForm(f => ({ ...f, image_url: e.target.value }))} className="mt-1 rounded-xl" placeholder="https://..." /></div>
-                          <div className="flex items-center gap-3">
-                            <input type="checkbox" id="in_stock" checked={productForm.in_stock} onChange={e => setProductForm(f => ({ ...f, in_stock: e.target.checked }))} className="w-4 h-4 accent-pink-500" />
-                            <Label htmlFor="in_stock">Còn hàng</Label>
+                          <div>
+                            <Label htmlFor="stock">Số lượng trong kho (Stock)</Label>
+                            <Input id="stock" type="number" min="0" value={productForm.stock} onChange={e => setProductForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} className="mt-1 rounded-xl" placeholder="Ví dụ: 100" />
                           </div>
                           <div className="flex gap-3 pt-2">
                             <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetProductForm}>Hủy</Button>
@@ -471,9 +471,12 @@ export default function AdminDashboard() {
                           className="bg-white dark:bg-card rounded-3xl shadow-md border overflow-hidden hover:shadow-xl transition-shadow">
                           <div className="h-40 bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center text-6xl relative">
                             {product.image_url ? <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" /> : '🛍️'}
-                            <div className="absolute top-2 right-2">
-                              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                              <span className={`text-xs px-2 py-1 rounded-full font-semibold shadow-sm ${product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                 {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                              </span>
+                              <span className="text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-semibold shadow-sm border">
+                                Kho: {product.stock ?? 0}
                               </span>
                             </div>
                           </div>
@@ -483,7 +486,7 @@ export default function AdminDashboard() {
                             <div className="flex items-center justify-between">
                               <span className="text-lg font-extrabold text-pink-500">{product.price?.toLocaleString('vi-VN')}₫</span>
                               <div className="flex gap-2">
-                                <Button size="icon" variant="outline" className="rounded-xl" onClick={() => { setEditingProduct(product); setProductForm({ name: product.name, description: product.description || '', price: String(product.price), image_url: product.image_url || '', category: product.category || 'Toys', age_group: product.age_group || '', in_stock: product.in_stock }); setIsProductDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                                <Button size="icon" variant="outline" className="rounded-xl" onClick={() => { setEditingProduct(product); setProductForm({ name: product.name, description: product.description || '', price: String(product.price), image_url: product.image_url || '', category: product.category || 'Toys', age_group: product.age_group || '', stock: product.stock ?? 0 }); setIsProductDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
                                 <Button size="icon" variant="destructive" className="rounded-xl" onClick={() => handleProductDelete(product.id)}><Trash2 className="w-4 h-4" /></Button>
                               </div>
                             </div>

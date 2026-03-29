@@ -9,6 +9,7 @@ export interface Product {
     category?: string;
     age_group?: string;
     in_stock: boolean;
+    stock: number;
     created_at: string;
 }
 
@@ -33,7 +34,7 @@ export interface ProductFilters {
     limit?: number;
 }
 
-function buildQueryString(params: Record<string, string | number | boolean | undefined>): string {
+function buildQueryString(params: Record<string, any>): string {
     const filtered = Object.entries(params)
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`);
