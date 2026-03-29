@@ -371,6 +371,9 @@ router.get('/admin/all', authenticateUser, requireAdmin, async (req: Request, re
             .from('orders')
             .select(`
                 *,
+                user:profiles (
+                    display_name
+                ),
                 order_items (
                     id,
                     quantity,

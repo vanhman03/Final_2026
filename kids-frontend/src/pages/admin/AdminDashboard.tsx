@@ -20,7 +20,7 @@ import {
 import { adminApi, AdminStats, AdminUserProfile } from '@/services/adminApi';
 import { productsApi } from '@/services/productsApi';
 import { videosApi } from '@/services/videosApi';
-import { Order } from '@/services/ordersApi';
+import { Order, ordersApi } from '@/services/ordersApi';
 import { Product } from '@/services/productsApi';
 
 
@@ -97,6 +97,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isOrderLoading, setIsOrderLoading] = useState(true);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
   // Users state
   const [users, setUsers] = useState<AdminUserProfile[]>([]);
@@ -222,12 +224,21 @@ export default function AdminDashboard() {
   };
 
   // ─── Order Handlers ───────────────────────────────────────────────────────────
-  const handleOrderStatusChange = async (orderId: string, status: 'pending' | 'completed' | 'failed' | 'cancelled') => {
+  const handleViewOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsOrderDetailOpen(true);
+  };
+
+  const handleDeleteOrder = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng này? Thao tác này không thể hoàn tác.')) return;
     try {
-      await adminApi.updateOrderStatus(orderId, status);
-      toast({ title: '✅ Đã cập nhật trạng thái đơn hàng!' });
+      await ordersApi.adminDeleteOrder(id);
+      toast({ title: '🗑️ Đã xóa đơn hàng thành công!' });
       fetchOrders();
-    } catch { toast({ title: 'Lỗi khi cập nhật', variant: 'destructive' }); }
+    } catch {
+      toast({ title: 'Lỗi', description: 'Không thể xóa đơn hàng.', variant: 'destructive' });
+    }
   };
 
   // ─── User Handlers ────────────────────────────────────────────────────────────
@@ -252,6 +263,16 @@ export default function AdminDashboard() {
     (videoCategory === 'all' || v.category === videoCategory)
   );
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+  
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return '⏳ Chờ xử lý';
+      case 'completed': return '✅ Hoàn thành';
+      case 'failed': return '❌ Thất bại';
+      case 'cancelled': return '🚫 Đã hủy';
+      default: return status;
+    }
+  };
 
   // ─── Access guard ─────────────────────────────────────────────────────────────
   if (user?.role !== 'admin') {
@@ -535,33 +556,141 @@ export default function AdminDashboard() {
                   ) : orders.length > 0 ? (
                     <div className="space-y-4">
                       {orders.map((order, idx) => (
-                        <motion.div key={order.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * idx }}
-                          className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div>
-                            <p className="font-bold text-sm font-mono text-muted-foreground">#{order.id.slice(0, 8)}...</p>
-                            <p className="text-xl font-extrabold text-green-600">{parseFloat(String(order.total_amount)).toLocaleString('vi-VN')}₫</p>
-                            <p className="text-xs text-muted-foreground mt-1">{new Date(order.created_at).toLocaleString('vi-VN')}</p>
+                        <motion.div 
+                          key={order.id} 
+                          initial={{ opacity: 0, x: -20 }} 
+                          animate={{ opacity: 1, x: 0 }} 
+                          transition={{ delay: 0.05 * idx }}
+                          onClick={() => handleViewOrderDetails(order)}
+                          className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
+                              🛒
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm font-mono text-muted-foreground">#{order.id.slice(0, 8)}...</p>
+                              <p className="text-xl font-extrabold text-green-600">{parseFloat(String(order.total_amount)).toLocaleString('vi-VN')}₫</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                                  Khách: {order.user?.display_name || 'Khách vãng lai'}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  • {new Date(order.created_at).toLocaleString('vi-VN')}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.payment_status]}`}>
+                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${STATUS_COLORS[order.payment_status]}`}>
                               {order.payment_status === 'pending' ? '⏳ Chờ xử lý' : order.payment_status === 'completed' ? '✅ Hoàn thành' : order.payment_status === 'failed' ? '❌ Thất bại' : '🚫 Đã hủy'}
                             </span>
-                            <Select value={order.payment_status} onValueChange={v => handleOrderStatusChange(order.id, v as any)}>
-                              <SelectTrigger className="w-40 rounded-xl text-xs h-9"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">⏳ Chờ xử lý</SelectItem>
-                                <SelectItem value="completed">✅ Hoàn thành</SelectItem>
-                                <SelectItem value="failed">❌ Thất bại</SelectItem>
-                                <SelectItem value="cancelled">🚫 Đã hủy</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <button
+                              onClick={(e) => handleDeleteOrder(order.id, e)}
+                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
+                              title="Xóa đơn hàng"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
                           </div>
                         </motion.div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16"><div className="text-7xl mb-4">🛒</div><p className="text-muted-foreground text-lg">Không có đơn hàng nào</p></div>
+                    <div className="text-center py-16">
+                      <div className="text-7xl mb-4">🛒</div>
+                      <p className="text-muted-foreground text-lg">Không có đơn hàng nào</p>
+                    </div>
                   )}
+
+                  {/* Order Details Modal */}
+                  <Dialog open={isOrderDetailOpen} onOpenChange={setIsOrderDetailOpen}>
+                    <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
+                      <DialogHeader className="p-6 bg-gradient-to-r from-green-50 to-teal-50 border-b">
+                        <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-teal-700">
+                          <Package className="w-6 h-6" />
+                          Chi tiết đơn hàng
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      {selectedOrder && (
+                        <div className="p-6 space-y-6">
+                          {/* Order Summary Grid */}
+                          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Khách hàng</p>
+                              <p className="font-bold text-slate-800">{selectedOrder.user?.display_name || 'Khách vãng lai'}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Mã đơn</p>
+                              <p className="font-mono text-xs font-bold text-slate-600">#{selectedOrder.id.split('-')[0].toUpperCase()}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Thời gian</p>
+                              <p className="text-sm font-semibold">{new Date(selectedOrder.created_at).toLocaleString('vi-VN')}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Trạng thái</p>
+                              <Badge className={`${STATUS_COLORS[selectedOrder.payment_status]} shadow-none`}>
+                                {getStatusLabel(selectedOrder.payment_status)}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Items List */}
+                          <div>
+                            <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-700">
+                              <ShoppingCart className="w-4 h-4" /> Danh sách sản phẩm ({selectedOrder.order_items?.length || 0})
+                            </h3>
+                            <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                              {selectedOrder.order_items?.map((item) => (
+                                <div key={item.id} className="flex items-center gap-4 p-3 bg-white rounded-2xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50/30 transition-all group">
+                                  <div className="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
+                                    {item.product?.image_url ? (
+                                      <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-2xl bg-teal-50 text-teal-500">🛍️</div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-slate-800 truncate group-hover:text-teal-700 transition-colors">{item.product?.name || 'Sản phẩm đã xóa'}</p>
+                                    <p className="text-[11px] text-muted-foreground">Đơn giá: {item.price_at_purchase?.toLocaleString('vi-VN')}₫</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-xs font-bold text-teal-600">x{item.quantity}</p>
+                                    <p className="font-bold text-slate-900">{(item.price_at_purchase * item.quantity).toLocaleString('vi-VN')}₫</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Footer Info */}
+                          <div className="pt-6 border-t flex items-end justify-between">
+                            <div className="space-y-1">
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Mã giao dịch VNPay</p>
+                              <p className="font-mono text-[11px] bg-slate-100 px-2 py-1 rounded text-slate-600 border border-slate-200">
+                                {selectedOrder.vnp_txn_ref || 'CHƯA CÓ MÃ'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-muted-foreground mb-1">TỔNG THANH TOÁN</p>
+                              <p className="text-3xl font-black text-teal-600 tracking-tight">
+                                {selectedOrder.total_amount?.toLocaleString('vi-VN')}₫
+                              </p>
+                            </div>
+                          </div>
+
+                          <Button 
+                            className="w-full rounded-2xl py-6 text-base font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200 transition-all hover:scale-[1.02] active:scale-[0.98]" 
+                            onClick={() => setIsOrderDetailOpen(false)}
+                          >
+                            Đóng cửa sổ
+                          </Button>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               )}
 

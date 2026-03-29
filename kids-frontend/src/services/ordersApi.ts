@@ -17,6 +17,9 @@ export interface Order {
     payment_status: 'pending' | 'completed' | 'failed' | 'cancelled';
     vnp_txn_ref?: string;
     created_at: string;
+    user?: {
+        display_name: string;
+    };
     order_items?: OrderItem[];
 }
 
@@ -53,4 +56,6 @@ export const ordersApi = {
 
     createPaymentUrl: (orderId: string) =>
         api.post<{ paymentUrl: string }>('/api/payment/vnpay/create', { order_id: orderId }),
+
+    adminDeleteOrder: (id: string) => api.delete<{ message: string }>(`/api/admin/orders/${id}`),
 };

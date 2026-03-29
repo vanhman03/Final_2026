@@ -223,6 +223,55 @@ router.put('/orders/:id/status', authenticateUser, requireAdmin, async (req: Req
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/orders/{id}:
+ *   delete:
+ *     summary: Delete an order (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Order deleted successfully
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: Order not found
+ */
+router.delete('/orders/:id', authenticateUser, requireAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // First delete associated order items (if not already handled by cascade)
+        const { error: itemError } = await supabase
+            .from('order_items')
+            .delete()
+            .eq('order_id', id);
+
+        if (itemError) return errorResponse(res, 'Failed to delete order items', 500, itemError);
+
+        const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', id);
+
+        if (error) return errorResponse(res, 'Failed to delete order', 500, error);
+
+        return successResponse(res, 'Order deleted successfully');
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to delete order';
+        return errorResponse(res, message, 500);
+    }
+});
+
 // ─── BADGE MANAGEMENT ────────────────────────────────────────────────────────
 // Note: Manual badge awarding has been removed. Badges are now earned through gameplay.
 
