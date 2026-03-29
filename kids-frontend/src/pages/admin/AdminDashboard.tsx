@@ -280,7 +280,7 @@ export default function AdminDashboard() {
                 ⭐
               </div>
               <div>
-                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-extrabold text-indigo-600">
                   Trang Quản Trị
                 </h1>
                 <p className="text-muted-foreground">Quản lý nội dung, sản phẩm, đơn hàng và người dùng</p>

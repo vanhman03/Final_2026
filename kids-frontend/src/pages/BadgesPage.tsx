@@ -60,7 +60,7 @@ export default function BadgesPage() {
                             <div className="flex items-center gap-3">
                                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">🏆</div>
                                 <div>
-                                    <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+                                    <h1 className="text-3xl md:text-4xl font-extrabold text-amber-600">
                                         Huy Hiệu Của Bé
                                     </h1>
                                     <p className="text-muted-foreground">Sưu tập thành tích của bạn!</p>

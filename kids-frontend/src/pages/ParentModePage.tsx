@@ -184,7 +184,7 @@ export default function ParentModePage() {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-2xl shadow">🛡️</div>
                   <div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 bg-clip-text text-transparent">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-teal-600">
                       Chế Độ Phụ Huynh
                     </h1>
                     <p className="text-muted-foreground text-sm">Theo dõi hoạt động của bé</p>

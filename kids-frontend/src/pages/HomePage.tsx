@@ -97,7 +97,7 @@ export default function HomePage() {
                 </motion.div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold">
-                    Hi, <span className="text-gradient-hero">{displayName}</span>!
+                    Hi, <span className="text-primary">{displayName}</span>!
                   </h1>
                   <p className="text-muted-foreground">Ready for some fun learning today?</p>
                 </div>

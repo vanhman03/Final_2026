@@ -83,7 +83,7 @@ export default function LoginPage() {
           >
             <span className="text-5xl">🌟</span>
           </motion.div>
-          <span className="font-extrabold text-3xl text-gradient-hero">EduKids</span>
+          <span className="font-extrabold text-3xl text-primary">EduKids</span>
         </Link>
         
         {/* Login Card */}

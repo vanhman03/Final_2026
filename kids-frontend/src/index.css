@@ -143,17 +143,11 @@
 
 @layer utilities {
   .text-gradient-hero {
-    background: var(--gradient-hero);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    @apply text-primary;
   }
 
   .text-gradient-fun {
-    background: var(--gradient-fun);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    @apply text-secondary;
   }
 
   .bg-gradient-hero {

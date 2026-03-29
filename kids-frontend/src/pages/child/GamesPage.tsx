@@ -25,7 +25,7 @@ const games: Game[] = [
     title: 'Color Match',
     description: 'Match the colors and earn points!',
     emoji: '🎨',
-    color: 'bg-gradient-fun',
+    color: 'bg-secondary/20',
     difficulty: 'Easy',
     points: 50,
     isLocked: false,
@@ -37,7 +37,7 @@ const games: Game[] = [
     title: 'Puzzle Fun',
     description: 'Solve puzzles to unlock surprises!',
     emoji: '🧩',
-    color: 'bg-gradient-hero',
+    color: 'bg-primary/20',
     difficulty: 'Medium',
     points: 100,
     isLocked: false,
@@ -49,7 +49,7 @@ const games: Game[] = [
     title: 'Number Quest',
     description: 'Learn numbers in a fun way!',
     emoji: '🔢',
-    color: 'bg-gradient-nature',
+    color: 'bg-success/20',
     difficulty: 'Easy',
     points: 50,
     isLocked: true,
@@ -61,7 +61,7 @@ const games: Game[] = [
     title: 'Word Builder',
     description: 'Build words and expand vocabulary!',
     emoji: '📝',
-    color: 'bg-gradient-sunset',
+    color: 'bg-warning/20',
     difficulty: 'Hard',
     points: 150,
     isLocked: true,
@@ -115,8 +115,8 @@ export default function GamesPage() {
             >
               🎮
             </motion.div>
-            <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
-              Fun <span className="text-gradient-fun">Games</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-primary">
+              Fun <span className="text-secondary">Games</span>
             </h1>
             <p className="text-muted-foreground text-lg">Choose a game and start learning!</p>
           </motion.div>

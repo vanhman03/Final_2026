@@ -86,7 +86,7 @@ export default function LandingPage() {
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
                 Where Kids{' '}
-                <span className="text-gradient-hero">Learn & Play</span>
+                <span className="text-primary">Learn & Play</span>
                 {' '}Safely
               </h1>
               
@@ -201,7 +201,7 @@ export default function LandingPage() {
                 variants={itemVariants}
                 className="text-center"
               >
-                <p className="text-3xl md:text-4xl font-extrabold text-gradient-hero mb-2">
+                <p className="text-3xl md:text-4xl font-extrabold text-primary mb-2">
                   {stat.value}
                 </p>
                 <p className="text-muted-foreground font-medium">{stat.label}</p>
@@ -222,7 +222,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
               Everything Kids Need to{' '}
-              <span className="text-gradient-fun">Learn & Grow</span>
+              <span className="text-secondary">Learn & Grow</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               A complete educational platform designed with love for children and peace of mind for parents.
@@ -285,7 +285,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <span className="text-3xl">🌟</span>
-              <span className="font-extrabold text-2xl text-gradient-hero">EduKids</span>
+              <span className="font-extrabold text-2xl text-primary">EduKids</span>
             </div>
             <p className="text-muted-foreground text-center">
               © 2024 EduKids. Made with ❤️ for children everywhere.

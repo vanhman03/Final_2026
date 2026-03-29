@@ -109,7 +109,7 @@ export function Navbar() {
                 className="flex items-center gap-2"
               >
                 <span className="text-3xl">🌟</span>
-                <span className="font-extrabold text-xl md:text-2xl text-gradient-hero">
+                <span className="font-extrabold text-xl md:text-2xl text-primary">
                   EduKids
                 </span>
               </motion.div>

@@ -141,7 +141,7 @@ export default function RegisterPage() {
           className="bg-card rounded-3xl shadow-card p-8 border border-border"
         >
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-extrabold mb-2">Join EduKids!</h1>
+            <h1 className="text-3xl font-extrabold text-primary">EduKids</h1>
             <p className="text-muted-foreground">Create your parent account</p>
           </div>
           
