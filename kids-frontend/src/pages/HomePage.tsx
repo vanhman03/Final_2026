@@ -236,19 +236,23 @@ export default function HomePage() {
                       profilesApi.incrementVideoCount().then(() => refreshUserData()).catch(console.error);
                     }}
                   >
-                    <div className="aspect-video bg-gradient-sky flex items-center justify-center text-6xl relative">
-                      {video.thumbnail_emoji || '📺'}
-                      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={`https://img.youtube.com/vi/${video.youtube_video_id}/mqdefault.jpg`} 
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                         <motion.div
                           initial={{ scale: 0 }}
                           whileHover={{ scale: 1 }}
-                          className="w-14 h-14 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="w-14 h-14 bg-primary/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg backdrop-blur-sm"
                         >
-                          <Play className="w-6 h-6 text-primary-foreground ml-1" />
+                          <Play className="w-6 h-6 fill-current ml-1" />
                         </motion.div>
                       </div>
                       {/* Duration badge */}
-                      <div className="absolute bottom-2 right-2 bg-foreground/80 text-background px-2 py-1 rounded-lg text-xs font-medium">
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
                         {video.duration}
                       </div>
                     </div>

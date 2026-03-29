@@ -368,7 +368,21 @@ export default function AdminDashboard() {
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div><Label>Thời lượng</Label><Input value={videoForm.duration} onChange={e => setVideoForm(f => ({ ...f, duration: e.target.value }))} placeholder="3:45" required className="mt-1 rounded-xl" /></div>
-                            <div><Label>Emoji</Label><Input value={videoForm.thumbnailEmoji} onChange={e => setVideoForm(f => ({ ...f, thumbnailEmoji: e.target.value }))} placeholder="📺" className="mt-1 rounded-xl" /></div>
+                            {/* Thumbnail Preview Area */}
+                            <div className="col-span-2">
+                              <Label>Bản xem trước ảnh đại diện</Label>
+                              <div className="mt-1 aspect-video rounded-xl bg-muted overflow-hidden border flex items-center justify-center">
+                                {extractYouTubeId(videoForm.youtubeUrl) ? (
+                                  <img 
+                                    src={`https://img.youtube.com/vi/${extractYouTubeId(videoForm.youtubeUrl)}/mqdefault.jpg`} 
+                                    className="w-full h-full object-cover"
+                                    alt="Preview"
+                                  />
+                                ) : (
+                                  <div className="text-muted-foreground text-sm">Nhập link YouTube để xem trước</div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <div className="flex gap-3 pt-2">
                             <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetVideoForm}>Hủy</Button>
@@ -386,8 +400,12 @@ export default function AdminDashboard() {
                       {filteredVideos.map((video, idx) => (
                         <motion.div key={video.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * idx }}
                           className="bg-white dark:bg-card rounded-3xl shadow-md border border-border overflow-hidden group hover:shadow-xl transition-shadow">
-                          <div className="aspect-video bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center text-7xl relative">
-                            {video.thumbnail_emoji || '📺'}
+                          <div className="aspect-video relative overflow-hidden">
+                            <img 
+                              src={`https://img.youtube.com/vi/${video.youtube_video_id}/mqdefault.jpg`} 
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                            />
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-all flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
                               <a href={`https://youtube.com/watch?v=${video.youtube_video_id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
                                 <Button size="icon" className="rounded-full bg-orange-500 hover:bg-orange-600 border-none shadow-lg w-10 h-10">
