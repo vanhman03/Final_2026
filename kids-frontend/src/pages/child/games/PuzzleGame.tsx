@@ -53,7 +53,7 @@ const puzzleThemes = [
 ];
 
 export default function PuzzleGame() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -175,6 +175,7 @@ export default function PuzzleGame() {
       // Add points to profile
       if (earnedPoints > 0) {
         await profilesApi.addPoints(earnedPoints);
+        await refreshUserData();
       }
     } catch (error) {
       console.error('Failed to log game activity:', error);

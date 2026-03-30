@@ -31,7 +31,7 @@ const TOTAL_ROUNDS = 10;
 const POINTS_PER_CORRECT = 10;
 
 export default function ColorMatchGame() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -130,6 +130,7 @@ export default function ColorMatchGame() {
       // Add points to profile
       if (score > 0) {
         await profilesApi.addPoints(score);
+        await refreshUserData();
       }
     } catch (error) {
       console.error('Failed to log game activity:', error);
