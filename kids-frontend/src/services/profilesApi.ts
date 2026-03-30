@@ -21,7 +21,8 @@ export interface ProfileStats {
     videosWatchedCount: number;
     points: number;
     badges: string[];
-    recentGames: unknown[];
+    recentGames: any[];
+    recentVideos?: any[];
 }
 
 export interface UpdateProfileRequest {
@@ -55,8 +56,8 @@ export const profilesApi = {
     addPoints: (points: number) =>
         api.post<{ points: number }>('/api/profiles/me/add-points', { points }),
 
-    incrementVideoCount: () =>
-        api.post<{ videos_watched_count: number }>('/api/profiles/me/increment-video-count'),
+    incrementVideoCount: (videoId?: string) =>
+        api.post<{ videos_watched_count: number }>('/api/profiles/me/increment-video-count', { video_id: videoId }),
 
     getScreenTimeStatus: () =>
         api.get<ScreenTimeStatus>('/api/profiles/me/screen-time-status'),

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/context/AuthContext";
 import { useParentMode } from "@/context/ParentModeContext";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +50,7 @@ export default function ParentModePage() {
   const [confirmNewPin, setConfirmNewPin] = useState("");
   const [showPins, setShowPins] = useState(false);
   const [isChangingPin, setIsChangingPin] = useState(false);
+  const [showRecentVideos, setShowRecentVideos] = useState(false);
 
   // ── Screen-time limit local state ────────────────────────────────────────
   // We keep a local copy so the input is responsive without firing an API call
@@ -207,13 +210,15 @@ export default function ParentModePage() {
           {/* Quick Stats */}
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: Video, value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
-              { icon: Star, value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
-              { icon: Gamepad2, value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
-              { icon: Trophy, value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
-            ].map((stat, i) => (
+              { id: 'videos', icon: Video, value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
+              { id: 'points', icon: Star, value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
+              { id: 'games', icon: Gamepad2, value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
+              { id: 'badges', icon: Trophy, value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
+            ].map((stat) => (
               <motion.div key={stat.label} variants={itemVariants}
-                className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border">
+                className={`bg-white dark:bg-card rounded-2xl p-5 shadow-md border ${stat.id === 'videos' ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1' : ''}`}
+                onClick={() => stat.id === 'videos' && setShowRecentVideos(true)}
+              >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-3 shadow`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
@@ -435,6 +440,59 @@ export default function ParentModePage() {
 
         </div>
       </div>
+
+      {/* Recent Videos Dialog */}
+      <Dialog open={showRecentVideos} onOpenChange={setShowRecentVideos}>
+        <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 pb-4 bg-gradient-to-br from-blue-500 to-cyan-600 text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <Video className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-extrabold tracking-tight">Video bé đã xem</DialogTitle>
+                <DialogDescription className="text-blue-100 mt-1 font-medium">10 video mới nhất bé đã thích và xem</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[60vh] p-6 bg-slate-50 dark:bg-slate-900 border-t">
+            {profileStats?.recentVideos && profileStats.recentVideos.length > 0 ? (
+              <div className="flex flex-col gap-4 pb-4">
+                {profileStats.recentVideos.map((hv: any) => (
+                  <div key={hv.id} className="flex gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border hover:shadow-md transition-shadow">
+                    <div className="w-32 h-20 shrink-0 relative rounded-xl overflow-hidden bg-slate-200 cursor-pointer group" onClick={() => window.open(`https://youtube.com/watch?v=${hv.video?.youtube_video_id}`, '_blank')}>
+                      {hv.video?.youtube_video_id ? (
+                        <img 
+                          src={`https://img.youtube.com/vi/${hv.video.youtube_video_id}/mqdefault.jpg`} 
+                          alt={hv.video?.title || "Video"}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Video className="w-8 h-8 text-slate-400" /></div>
+                      )}
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                         <Play className="w-8 h-8 text-white/90 fill-white/90 drop-shadow-md" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <h4 className="font-bold text-base line-clamp-2 text-slate-800 dark:text-slate-100 leading-tight mb-2 hover:text-blue-500 cursor-pointer" onClick={() => window.open(`https://youtube.com/watch?v=${hv.video?.youtube_video_id}`, '_blank')}>{hv.video?.title || "Video không xác định"}</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">
+                        {new Date(hv.watched_at).toLocaleString('vi-VN')}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center py-12 text-slate-400">
+                <Video className="w-16 h-16 mb-4 opacity-50" />
+                <p className="text-lg font-medium text-slate-500">Chưa có hoặc lịch sử chưa được ghi nhận.</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

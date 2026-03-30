@@ -276,12 +276,29 @@ router.get('/me/stats', authenticateUser, async (req: Request, res: Response) =>
             return errorResponse(res, 'Failed to fetch stats', 500, error);
         }
 
+        let recentVideos: any[] = [];
+        try {
+            const { data: historyData, error: historyError } = await supabase
+                .from('video_history')
+                .select('*, video:videos(*)')
+                .eq('user_id', userId)
+                .order('watched_at', { ascending: false })
+                .limit(10);
+            
+            if (!historyError && historyData) {
+                recentVideos = historyData;
+            }
+        } catch (e) {
+            console.warn("video_history query failed, migration might be missing:", e);
+        }
+
         return successResponse(res, 'Stats retrieved', {
             totalWatchTime: profile?.total_watch_time || 0,
             videosWatchedCount: profile?.videos_watched_count || 0,
             points: profile?.points || 0,
             badges: profile?.badges || [],
             recentGames: profile?.game_history || [],
+            recentVideos: recentVideos,
         });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Failed to fetch stats';
@@ -520,6 +537,16 @@ router.post('/me/increment-watch-time', authenticateUser, async (req: Request, r
 router.post('/me/increment-video-count', authenticateUser, async (req: Request, res: Response) => {
     try {
         const userId = req.user?.id;
+        const { video_id } = req.body;
+
+        if (video_id) {
+            const { error: historyError } = await supabase
+                .from('video_history')
+                .insert({ user_id: userId, video_id });
+            if (historyError) {
+                console.error("Failed to log video history:", historyError.message);
+            }
+        }
 
         const { data: profile, error: fetchError } = await supabase
             .from('profiles')

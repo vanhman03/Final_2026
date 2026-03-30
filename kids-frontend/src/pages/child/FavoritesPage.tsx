@@ -6,15 +6,27 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { favoritesApi, Favorite } from '@/services';
+import { favoritesApi, profilesApi, Favorite } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 export default function FavoritesPage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [playingVideo, setPlayingVideo] = useState<Favorite['video'] | null>(null);
+
+  const handlePlayVideo = (video: Favorite['video']) => {
+    if (!video) return;
+    setPlayingVideo(video);
+    profilesApi.incrementVideoCount(video.id)
+      .then(() => {
+        refreshUserData();
+      })
+      .catch(err => {
+        console.error('Failed to increment video count:', err);
+      });
+  };
 
   // Fetch favorites from API
   const { data: favorites = [], isLoading } = useQuery({
@@ -178,7 +190,7 @@ export default function FavoritesPage() {
                   {/* Thumbnail */}
                   <div
                     className="aspect-video bg-gradient-sky relative flex items-center justify-center cursor-pointer overflow-hidden"
-                    onClick={() => favorite.video && setPlayingVideo(favorite.video)}
+                    onClick={() => handlePlayVideo(favorite.video)}
                   >
                     {favorite.video?.youtube_video_id ? (
                       <img 

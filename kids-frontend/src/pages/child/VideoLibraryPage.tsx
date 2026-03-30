@@ -113,7 +113,7 @@ export default function VideoLibraryPage() {
 
   const handlePlayVideo = (video: VideoItem) => {
     setPlayingVideo(video);
-    profilesApi.incrementVideoCount()
+    profilesApi.incrementVideoCount(video.id)
       .then(() => {
         refreshUserData();
       })
