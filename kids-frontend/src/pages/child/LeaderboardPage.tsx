@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Medal } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const RANK_STYLES = [
   'from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-200',
 ];
 
-const RANK_EMOJI = ['🥇', '🥈', '🥉'];
+// Removed RANK_EMOJI array to use Lucide icons
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
@@ -45,8 +45,8 @@ export default function LeaderboardPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg">
-                  🏆
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white shadow-lg">
+                  <Trophy className="w-8 h-8" />
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
           {/* Leaderboard List */}
           {!isLoading && leaderboard.length === 0 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-              <div className="text-6xl mb-4">🎮</div>
+              <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="text-xl font-bold mb-2">No scores yet</h3>
               <p className="text-muted-foreground">Be the first to play and claim the top spot!</p>
               <Button className="mt-4" onClick={() => navigate('/games')}>Play Now</Button>
@@ -120,7 +120,7 @@ export default function LeaderboardPage() {
                           : 'bg-muted text-muted-foreground'
                       }`}
                     >
-                      {isTopThree ? RANK_EMOJI[index] : index + 1}
+                      {index + 1}
                     </div>
 
                     {/* Player info */}

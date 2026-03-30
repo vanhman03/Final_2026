@@ -177,10 +177,18 @@ export default function FavoritesPage() {
                 >
                   {/* Thumbnail */}
                   <div
-                    className="aspect-video bg-gradient-sky relative flex items-center justify-center text-7xl cursor-pointer"
+                    className="aspect-video bg-gradient-sky relative flex items-center justify-center cursor-pointer overflow-hidden"
                     onClick={() => favorite.video && setPlayingVideo(favorite.video)}
                   >
-                    {favorite.video?.thumbnail_emoji || '📺'}
+                    {favorite.video?.youtube_video_id ? (
+                      <img 
+                        src={`https://img.youtube.com/vi/${favorite.video.youtube_video_id}/mqdefault.jpg`} 
+                        alt={favorite.video.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <Play className="w-16 h-16 text-white/50" />
+                    )}
 
                     {/* Play overlay */}
                     <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-all flex items-center justify-center">
@@ -237,7 +245,7 @@ export default function FavoritesPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <div className="text-6xl mb-4">💔</div>
+              <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
               <h3 className="text-xl font-bold mb-2">No favorites yet</h3>
               <p className="text-muted-foreground mb-6">
                 {searchQuery ? 'No videos match your search' : 'Start adding videos to your favorites!'}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,7 +47,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({
-        title: 'Welcome back! 🎉',
+        title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
     } catch (error: any) {
@@ -81,7 +81,7 @@ export default function LoginPage() {
             animate={{ scale: 1 }}
             transition={{ type: 'spring', bounce: 0.5 }}
           >
-            <span className="text-5xl">🌟</span>
+            <Star className="w-12 h-12 text-primary fill-current" />
           </motion.div>
           <span className="font-extrabold text-3xl text-primary">EduKids</span>
         </Link>

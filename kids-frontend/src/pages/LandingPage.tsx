@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Gamepad2, Shield, Star, Users, Clock, ChevronRight } from 'lucide-react';
+import { Play, Gamepad2, Shield, Star, Users, Clock, ChevronRight, Trophy, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
 import { FloatingElements } from '@/components/FloatingElements';
@@ -154,8 +154,8 @@ export default function LandingPage() {
                 className="absolute -bottom-6 -left-6 bg-card p-4 rounded-2xl shadow-card hidden md:block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center text-2xl">
-                    🏆
+                  <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center text-success">
+                    <Trophy className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="font-bold">450 Points</p>
@@ -171,8 +171,8 @@ export default function LandingPage() {
                 className="absolute -top-4 -right-4 bg-card p-4 rounded-2xl shadow-card hidden md:block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-2xl">
-                    🎮
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary text-2xl">
+                    <Gamepad2 className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="font-bold">5 Games</p>
@@ -284,11 +284,11 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <span className="text-3xl">🌟</span>
+              <Star className="text-3xl text-primary fill-current" />
               <span className="font-extrabold text-2xl text-primary">EduKids</span>
             </div>
-            <p className="text-muted-foreground text-center">
-              © 2024 EduKids. Made with ❤️ for children everywhere.
+            <p className="text-muted-foreground text-center flex items-center gap-1 justify-center">
+              © 2024 EduKids. Made with <Heart className="w-4 h-4 text-rose-500 fill-current" /> for children everywhere.
             </p>
             <div className="flex items-center gap-4">
               <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">

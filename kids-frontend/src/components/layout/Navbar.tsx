@@ -12,6 +12,8 @@ import {
   X,
   Settings,
   Clock,
+  User,
+  Star as StarIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -108,7 +110,7 @@ export function Navbar() {
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center gap-2"
               >
-                <span className="text-3xl">🌟</span>
+                <StarIcon className="w-8 h-8 text-primary fill-current" />
                 <span className="font-extrabold text-xl md:text-2xl text-primary">
                   EduKids
                 </span>
@@ -179,7 +181,9 @@ export function Navbar() {
                   )}
 
                   <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted rounded-2xl">
-                    <span className="text-2xl">{user.avatar || "👤"}</span>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+                      {user.avatar && !user.avatar.includes('<') ? <span className="text-lg">{user.avatar}</span> : <User className="w-5 h-5" />}
+                    </div>
                     <span className="font-semibold">{user.name}</span>
                   </div>
                   <Button

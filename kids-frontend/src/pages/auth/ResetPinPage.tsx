@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { KeyRound, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import { KeyRound, Eye, EyeOff, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,7 +134,7 @@ export default function ResetPinPage() {
             animate={{ scale: 1 }}
             transition={{ type: "spring", bounce: 0.5 }}
           >
-            <span className="text-5xl">🌟</span>
+            <Star className="w-12 h-12 text-primary fill-current" />
           </motion.div>
           <span className="font-extrabold text-3xl text-gradient-hero">
             EduKids

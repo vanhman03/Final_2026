@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Clock, Shield, TrendingUp, ArrowLeft, Gamepad2, Play,
   KeyRound, Eye, EyeOff, Trophy, Star, BarChart3, RefreshCw,
+  Video, Save, Palette, Puzzle, HelpCircle, Binary, LucideIcon
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,12 @@ const containerVariants = {
 };
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
-const GAME_TYPE_EMOJI: Record<string, string> = {
-  'color-match': '🎨', 'puzzle': '🧩', 'quiz': '❓', 'math': '🔢', default: '🎮',
+const GAME_TYPE_ICONS: Record<string, LucideIcon> = {
+  'color-match': Palette,
+  'puzzle': Puzzle,
+  'quiz': HelpCircle,
+  'math': Binary,
+  default: Gamepad2,
 };
 
 export default function ParentModePage() {
@@ -154,7 +159,7 @@ export default function ParentModePage() {
       const isValid = await verifyPin(currentPin);
       if (!isValid) return toast({ title: "PIN sai", description: "PIN hiện tại không đúng.", variant: "destructive" });
       await updatePin(newPin);
-      toast({ title: "✅ Đã đổi PIN!", description: "PIN đã được cập nhật thành công." });
+      toast({ title: "Đã đổi PIN!", description: "PIN đã được cập nhật thành công." });
       setCurrentPin(""); setNewPin(""); setConfirmNewPin(""); setShowPinChange(false);
     } catch (error: any) {
       toast({ title: "Lỗi đổi PIN", description: error.message || "Vui lòng thử lại.", variant: "destructive" });
@@ -182,7 +187,9 @@ export default function ParentModePage() {
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-2xl shadow">🛡️</div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shadow">
+                    <Shield className="w-7 h-7" />
+                  </div>
                   <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-teal-600">
                       Chế Độ Phụ Huynh
@@ -200,15 +207,15 @@ export default function ParentModePage() {
           {/* Quick Stats */}
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: '📺', value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
-              { icon: '⭐', value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
-              { icon: '🎮', value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
-              { icon: '🏆', value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
+              { icon: Video, value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
+              { icon: Star, value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
+              { icon: Gamepad2, value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
+              { icon: Trophy, value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
             ].map((stat, i) => (
               <motion.div key={stat.label} variants={itemVariants}
                 className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-2xl mb-3 shadow`}>
-                  {stat.icon}
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-3 shadow`}>
+                  <stat.icon className="w-6 h-6" />
                 </div>
                 <p className="text-2xl font-extrabold">{stat.value}</p>
                 <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
@@ -322,8 +329,12 @@ export default function ParentModePage() {
                     onChange={e => setConfirmNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="rounded-xl" maxLength={6} />
                 </div>
                 <div className="flex gap-3">
-                  <Button type="submit" className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white" disabled={isChangingPin || currentPin.length < 4 || newPin.length < 4}>
-                    {isChangingPin ? "Đang lưu..." : "💾 Lưu PIN mới"}
+                  <Button type="submit" className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white gap-2" disabled={isChangingPin || currentPin.length < 4 || newPin.length < 4}>
+                    {isChangingPin ? "Đang lưu..." : (
+                      <>
+                        <Save className="w-4 h-4" /> Lưu PIN mới
+                      </>
+                    )}
                   </Button>
                   <Button type="button" variant="outline" className="rounded-xl" onClick={() => { setShowPinChange(false); setCurrentPin(""); setNewPin(""); setConfirmNewPin(""); }}>
                     Hủy
@@ -350,14 +361,21 @@ export default function ParentModePage() {
                     <motion.div key={game.id} whileHover={{ x: 4 }}
                       className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl border border-purple-100 dark:border-purple-800">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{GAME_TYPE_EMOJI[game.game_type] || GAME_TYPE_EMOJI.default}</span>
+                        <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+                          {(() => {
+                            const Icon = GAME_TYPE_ICONS[game.game_type] || GAME_TYPE_ICONS.default;
+                            return <Icon className="w-6 h-6" />;
+                          })()}
+                        </div>
                         <div>
                           <p className="font-semibold capitalize">{game.game_type.replace(/-/g, ' ')}</p>
                           <p className="text-xs text-muted-foreground">{new Date(game.played_at).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-purple-600">⭐ {game.score || 0} điểm</p>
+                        <p className="font-bold text-purple-600 flex items-center gap-1 justify-end">
+                          <Star className="w-4 h-4 fill-current" /> {game.score || 0} điểm
+                        </p>
                         {game.level && <p className="text-xs text-muted-foreground">Cấp {game.level}</p>}
                       </div>
                     </motion.div>
@@ -365,7 +383,7 @@ export default function ParentModePage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="text-5xl mb-3">🎮</div>
+                  <Gamepad2 className="w-16 h-16 mx-auto mb-3 text-muted-foreground/30" />
                   <p className="text-muted-foreground">Bé chưa chơi game nào</p>
                 </div>
               )}

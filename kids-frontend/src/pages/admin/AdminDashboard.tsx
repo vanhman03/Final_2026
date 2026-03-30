@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Edit, Trash2, Play, Video, Search, Filter, Users, ShoppingBag,
-  ShoppingCart, BarChart3, Star, Trophy, Package, AlertCircle, Check, X
+  ShoppingCart, BarChart3, Star, Trophy, Package, AlertCircle, Check, X,
+  LayoutDashboard, CheckCircle2, XCircle, Clock, Ban, User, History, Eye
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,7 @@ export default function AdminDashboard() {
   const [videoCategory, setVideoCategory] = useState('all');
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
-  const [videoForm, setVideoForm] = useState({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: '📺' });
+  const [videoForm, setVideoForm] = useState({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: 'video' });
 
   // Products state
   const [products, setProducts] = useState<Product[]>([]);
@@ -174,10 +175,10 @@ export default function AdminDashboard() {
     try {
       if (editingVideo) {
         await videosApi.updateVideo(editingVideo.id, payload);
-        toast({ title: '✅ Đã cập nhật video!' });
+        toast({ title: 'Cập nhật thành công!' });
       } else {
         await videosApi.createVideo(payload);
-        toast({ title: '🎬 Đã thêm video mới!' });
+        toast({ title: 'Đã thêm video mới!' });
       }
       resetVideoForm(); fetchVideos();
     } catch { toast({ title: 'Lỗi', description: 'Không thể lưu video.', variant: 'destructive' }); }
@@ -187,12 +188,12 @@ export default function AdminDashboard() {
     if (!confirm('Xóa video này?')) return;
     try {
       await videosApi.deleteVideo(id);
-      toast({ title: '🗑️ Đã xóa video' }); fetchVideos();
+      toast({ title: 'Đã xóa video' }); fetchVideos();
     } catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
   };
 
   const resetVideoForm = () => {
-    setVideoForm({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: '📺' });
+    setVideoForm({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: 'video' });
     setEditingVideo(null); setIsVideoDialogOpen(false);
   };
 
@@ -203,10 +204,10 @@ export default function AdminDashboard() {
     try {
       if (editingProduct) {
         await adminApi.updateProduct(editingProduct.id, payload);
-        toast({ title: '✅ Đã cập nhật sản phẩm!' });
+        toast({ title: 'Cập nhật thành công!' });
       } else {
         await adminApi.createProduct(payload);
-        toast({ title: '🛍️ Đã thêm sản phẩm mới!' });
+        toast({ title: 'Đã thêm sản phẩm mới!' });
       }
       resetProductForm(); fetchProducts();
     } catch { toast({ title: 'Lỗi', description: 'Không thể lưu sản phẩm.', variant: 'destructive' }); }
@@ -214,7 +215,7 @@ export default function AdminDashboard() {
 
   const handleProductDelete = async (id: string) => {
     if (!confirm('Xóa sản phẩm này?')) return;
-    try { await adminApi.deleteProduct(id); toast({ title: '🗑️ Đã xóa sản phẩm' }); fetchProducts(); }
+    try { await adminApi.deleteProduct(id); toast({ title: 'Đã xóa sản phẩm' }); fetchProducts(); }
     catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
   };
 
@@ -234,7 +235,7 @@ export default function AdminDashboard() {
     if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng này? Thao tác này không thể hoàn tác.')) return;
     try {
       await ordersApi.adminDeleteOrder(id);
-      toast({ title: '🗑️ Đã xóa đơn hàng thành công!' });
+      toast({ title: 'Đã xóa đơn hàng thành công!' });
       fetchOrders();
     } catch {
       toast({ title: 'Lỗi', description: 'Không thể xóa đơn hàng.', variant: 'destructive' });
@@ -246,14 +247,14 @@ export default function AdminDashboard() {
     try {
       const newStatus = currentIsActive ? 'inactive' : 'active';
       await adminApi.updateUserStatus(id, newStatus);
-      toast({ title: `✅ Đã chuyển sang ${newStatus === 'active' ? 'Active' : 'Inactive'}!` });
+      toast({ title: `Đã chuyển sang ${newStatus === 'active' ? 'Hoạt động' : 'Tạm khóa'}!` });
       fetchUsers();
     } catch { toast({ title: 'Lỗi khi cập nhật trạng thái', variant: 'destructive' }); }
   };
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm('Xóa người dùng này? Hành động không thể hoàn tác.')) return;
-    try { await adminApi.deleteUser(id); toast({ title: '🗑️ Đã xóa người dùng' }); fetchUsers(); }
+    try { await adminApi.deleteUser(id); toast({ title: 'Đã xóa người dùng' }); fetchUsers(); }
     catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
   };
 
@@ -266,10 +267,10 @@ export default function AdminDashboard() {
   
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return '⏳ Chờ xử lý';
-      case 'completed': return '✅ Hoàn thành';
-      case 'failed': return '❌ Thất bại';
-      case 'cancelled': return '🚫 Đã hủy';
+      case 'pending': return 'Chờ xử lý';
+      case 'completed': return 'Hoàn thành';
+      case 'failed': return 'Thất bại';
+      case 'cancelled': return 'Đã hủy';
       default: return status;
     }
   };
@@ -297,8 +298,8 @@ export default function AdminDashboard() {
           {/* ── Header ──────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-3xl shadow-lg">
-                ⭐
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <LayoutDashboard className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h1 className="text-4xl font-extrabold text-indigo-600">
@@ -312,15 +313,15 @@ export default function AdminDashboard() {
           {/* ── Stats Cards ──────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Video', value: stats?.totalVideos ?? '-', icon: '🎬', gradient: 'from-purple-400 to-purple-600' },
-              { label: 'Sản phẩm', value: stats?.totalProducts ?? '-', icon: '🛍️', gradient: 'from-pink-400 to-rose-600' },
-              { label: 'Đơn hàng', value: stats?.totalOrders ?? '-', icon: '🛒', gradient: 'from-green-400 to-teal-600' },
-              { label: 'Người dùng', value: stats?.totalUsers ?? '-', icon: '👥', gradient: 'from-orange-400 to-amber-600' },
+              { label: 'Video', value: stats?.totalVideos ?? '-', icon: Video, gradient: 'from-purple-400 to-purple-600' },
+              { label: 'Sản phẩm', value: stats?.totalProducts ?? '-', icon: ShoppingBag, gradient: 'from-pink-400 to-rose-600' },
+              { label: 'Đơn hàng', value: stats?.totalOrders ?? '-', icon: ShoppingCart, gradient: 'from-green-400 to-teal-600' },
+              { label: 'Người dùng', value: stats?.totalUsers ?? '-', icon: Users, gradient: 'from-orange-400 to-amber-600' },
             ].map((stat, i) => (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                 className="bg-white rounded-2xl p-5 shadow-md border border-white/50 dark:bg-card">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-2xl mb-3 shadow`}>
-                  {stat.icon}
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center mb-3 shadow`}>
+                  <stat.icon className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-3xl font-extrabold">{stat.value}</p>
                 <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
@@ -364,12 +365,15 @@ export default function AdminDashboard() {
                     </Select>
                     <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button className="rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingVideo(null); setVideoForm({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: '📺' }); }}>
+                        <Button className="rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingVideo(null); setVideoForm({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: 'video' }); }}>
                           <Plus className="w-4 h-4" /> Thêm Video
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md rounded-3xl">
-                        <DialogHeader><DialogTitle className="text-xl font-bold">{editingVideo ? '✏️ Sửa Video' : '🎬 Thêm Video Mới'}</DialogTitle></DialogHeader>
+                        <DialogHeader><DialogTitle className="text-xl font-bold flex items-center gap-2">
+                          {editingVideo ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                          {editingVideo ? 'Sửa Video' : 'Thêm Video Mới'}
+                        </DialogTitle></DialogHeader>
                         <form onSubmit={handleVideoSubmit} className="space-y-4 mt-2">
                           <div><Label>Tiêu đề</Label><Input value={videoForm.title} onChange={e => setVideoForm(f => ({ ...f, title: e.target.value }))} placeholder="Nhập tiêu đề video" required className="mt-1 rounded-xl" /></div>
                           <div><Label>YouTube URL</Label><Input value={videoForm.youtubeUrl} onChange={e => setVideoForm(f => ({ ...f, youtubeUrl: e.target.value }))} placeholder="https://youtube.com/watch?v=..." required className="mt-1 rounded-xl" /></div>
@@ -433,7 +437,7 @@ export default function AdminDashboard() {
                                   <Play className="w-5 h-5 fill-white ml-0.5" />
                                 </Button>
                               </a>
-                              <Button size="icon" className="rounded-full bg-amber-500 hover:bg-amber-600 border-none shadow-lg w-10 h-10" onClick={() => { setEditingVideo(video); setVideoForm({ title: video.title, youtubeUrl: video.youtube_url || `https://youtube.com/watch?v=${video.youtube_video_id}`, ageGroup: video.age_group, category: video.category, duration: video.duration, thumbnailEmoji: video.thumbnail_emoji || '📺' }); setIsVideoDialogOpen(true); }}>
+                              <Button size="icon" className="rounded-full bg-amber-500 hover:bg-amber-600 border-none shadow-lg w-10 h-10" onClick={() => { setEditingVideo(video); setVideoForm({ title: video.title, youtubeUrl: video.youtube_url || `https://youtube.com/watch?v=${video.youtube_video_id}`, ageGroup: video.age_group, category: video.category, duration: video.duration, thumbnailEmoji: video.thumbnail_emoji || 'video' }); setIsVideoDialogOpen(true); }}>
                                 <Edit className="w-5 h-5 text-white" />
                               </Button>
                               <Button size="icon" variant="destructive" className="rounded-full shadow-lg w-10 h-10" onClick={() => handleVideoDelete(video.id)}>
@@ -453,7 +457,10 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16"><div className="text-7xl mb-4">🎬</div><p className="text-muted-foreground text-lg">Chưa có video nào</p></div>
+                    <div className="text-center py-16">
+                      <Video className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground text-lg">Chưa có video nào</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -473,7 +480,10 @@ export default function AdminDashboard() {
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md rounded-3xl">
-                        <DialogHeader><DialogTitle>{editingProduct ? '✏️ Sửa Sản phẩm' : '🛍️ Thêm Sản phẩm Mới'}</DialogTitle></DialogHeader>
+                        <DialogHeader><DialogTitle className="flex items-center gap-2">
+                          {editingProduct ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                          {editingProduct ? 'Sửa Sản phẩm' : 'Thêm Sản phẩm Mới'}
+                        </DialogTitle></DialogHeader>
                         <form onSubmit={handleProductSubmit} className="space-y-4 mt-2">
                           <div><Label>Tên sản phẩm</Label><Input value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required className="mt-1 rounded-xl" placeholder="Ví dụ: Đồ chơi xếp hình" /></div>
                           <div><Label>Mô tả</Label><Input value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} className="mt-1 rounded-xl" placeholder="Mô tả sản phẩm..." /></div>
@@ -509,10 +519,11 @@ export default function AdminDashboard() {
                         <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * idx }}
                           className="bg-white dark:bg-card rounded-3xl shadow-md border overflow-hidden hover:shadow-xl transition-shadow">
                           <div className="h-40 bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center text-6xl relative">
-                            {product.image_url ? <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" /> : '🛍️'}
+                            {product.image_url ? <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" /> : <Package className="w-12 h-12 text-pink-200" />}
                             <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
                               <span className={`text-xs px-2 py-1 rounded-full font-semibold shadow-sm ${product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                                {product.in_stock ? <CheckCircle2 className="w-3 h-3 inline mr-1" /> : <XCircle className="w-3 h-3 inline mr-1" />}
+                                {product.in_stock ? 'Còn hàng' : 'Hết hàng'}
                               </span>
                               <span className="text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-semibold shadow-sm border">
                                 Kho: {product.stock ?? 0}
@@ -534,7 +545,10 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16"><div className="text-7xl mb-4">🛍️</div><p className="text-muted-foreground text-lg">Chưa có sản phẩm nào</p></div>
+                    <div className="text-center py-16">
+                      <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground text-lg">Chưa có sản phẩm nào</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -546,7 +560,8 @@ export default function AdminDashboard() {
                     {['all', 'pending', 'completed', 'failed', 'cancelled'].map(s => (
                       <button key={s} onClick={() => setOrderStatusFilter(s)}
                         className={`px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${orderStatusFilter === s ? 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow' : 'bg-white dark:bg-card border text-muted-foreground hover:bg-muted'}`}>
-                        {s === 'all' ? '🛒 Tất cả' : s === 'pending' ? '⏳ Chờ xử lý' : s === 'completed' ? '✅ Hoàn thành' : s === 'failed' ? '❌ Thất bại' : '🚫 Đã hủy'}
+                        {s === 'all' ? <ShoppingCart className="w-4 h-4" /> : s === 'pending' ? <Clock className="w-4 h-4" /> : s === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : s === 'failed' ? <XCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                        {s === 'all' ? 'Tất cả' : s === 'pending' ? 'Chờ xử lý' : s === 'completed' ? 'Hoàn thành' : s === 'failed' ? 'Thất bại' : 'Đã hủy'}
                       </button>
                     ))}
                   </div>
@@ -565,8 +580,8 @@ export default function AdminDashboard() {
                           className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
-                              🛒
+                             <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
+                              <ShoppingCart className="w-6 h-6 text-slate-400" />
                             </div>
                             <div>
                               <p className="font-bold text-sm font-mono text-muted-foreground">#{order.id.slice(0, 8)}...</p>
@@ -583,7 +598,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${STATUS_COLORS[order.payment_status]}`}>
-                              {order.payment_status === 'pending' ? '⏳ Chờ xử lý' : order.payment_status === 'completed' ? '✅ Hoàn thành' : order.payment_status === 'failed' ? '❌ Thất bại' : '🚫 Đã hủy'}
+                              {order.payment_status === 'pending' ? <><Clock className="w-3 h-3 inline mr-1" /> Chờ xử lý</> : order.payment_status === 'completed' ? <><CheckCircle2 className="w-3 h-3 inline mr-1" /> Hoàn thành</> : order.payment_status === 'failed' ? <><XCircle className="w-3 h-3 inline mr-1" /> Thất bại</> : <><Ban className="w-3 h-3 inline mr-1" /> Đã hủy</>}
                             </span>
                             <button
                               onClick={(e) => handleDeleteOrder(order.id, e)}
@@ -598,7 +613,7 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <div className="text-center py-16">
-                      <div className="text-7xl mb-4">🛒</div>
+                      <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
                       <p className="text-muted-foreground text-lg">Không có đơn hàng nào</p>
                     </div>
                   )}
@@ -649,7 +664,9 @@ export default function AdminDashboard() {
                                     {item.product?.image_url ? (
                                       <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-2xl bg-teal-50 text-teal-500">🛍️</div>
+                                      <div className="w-full h-full flex items-center justify-center bg-teal-50 text-teal-500">
+                                        <Package className="w-6 h-6" />
+                                      </div>
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -718,7 +735,7 @@ export default function AdminDashboard() {
                             className="bg-white dark:bg-card rounded-2xl p-5 shadow-md border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-300 to-amber-500 flex items-center justify-center text-2xl font-bold text-white shadow">
-                                {u.display_name?.[0]?.toUpperCase() || '👤'}
+                                {u.display_name?.[0]?.toUpperCase() || <User className="w-6 h-6 text-white" />}
                               </div>
                               <div>
                                 <p className="font-bold flex items-center gap-2">
@@ -748,7 +765,10 @@ export default function AdminDashboard() {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-16"><div className="text-7xl mb-4">👥</div><p className="text-muted-foreground text-lg">Không tìm thấy người dùng nào</p></div>
+                    <div className="text-center py-16">
+                      <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground text-lg">Không tìm thấy người dùng nào</p>
+                    </div>
                   )}
                 </div>
               )}

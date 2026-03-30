@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Star, Lock } from 'lucide-react';
+import { Star, Lock, Gamepad2, BarChart3, Palette, Puzzle, Binary, PenTool, LucideIcon } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { gamesApi } from '@/services';
 import { useAuth } from '@/context/AuthContext';
@@ -10,7 +10,7 @@ interface Game {
   id: string;
   title: string;
   description: string;
-  emoji: string;
+  icon: LucideIcon;
   color: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   points: number;
@@ -24,7 +24,7 @@ const games: Game[] = [
     id: '1',
     title: 'Color Match',
     description: 'Match the colors and earn points!',
-    emoji: '🎨',
+    icon: Palette,
     color: 'bg-secondary/20',
     difficulty: 'Easy',
     points: 50,
@@ -36,7 +36,7 @@ const games: Game[] = [
     id: '2',
     title: 'Puzzle Fun',
     description: 'Solve puzzles to unlock surprises!',
-    emoji: '🧩',
+    icon: Puzzle,
     color: 'bg-primary/20',
     difficulty: 'Medium',
     points: 100,
@@ -48,7 +48,7 @@ const games: Game[] = [
     id: '3',
     title: 'Number Quest',
     description: 'Learn numbers in a fun way!',
-    emoji: '🔢',
+    icon: Binary,
     color: 'bg-success/20',
     difficulty: 'Easy',
     points: 50,
@@ -60,7 +60,7 @@ const games: Game[] = [
     id: '4',
     title: 'Word Builder',
     description: 'Build words and expand vocabulary!',
-    emoji: '📝',
+    icon: PenTool,
     color: 'bg-warning/20',
     difficulty: 'Hard',
     points: 150,
@@ -111,9 +111,9 @@ export default function GamesPage() {
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
-              className="text-6xl mb-4"
+              className="flex justify-center mb-4 text-primary"
             >
-              🎮
+              <Gamepad2 className="w-16 h-16" />
             </motion.div>
             <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-primary">
               Fun <span className="text-secondary">Games</span>
@@ -163,7 +163,9 @@ export default function GamesPage() {
             transition={{ delay: 0.4 }}
             className="mt-12 bg-card rounded-3xl p-6 shadow-card border border-border max-w-md mx-auto"
           >
-            <h2 className="text-xl font-bold mb-4 text-center">Your Game Stats 📊</h2>
+            <h2 className="text-xl font-bold mb-4 text-center flex items-center justify-center gap-2">
+              Your Game Stats <BarChart3 className="w-6 h-6 text-primary" />
+            </h2>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-3xl font-extrabold text-primary">{stats.totalGames}</div>
@@ -195,13 +197,9 @@ function GameCardContent({ game }: { game: Game }) {
   return (
     <>
       <div className={`${game.color} p-8 flex items-center justify-center`}>
-        <motion.span
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="text-7xl"
-        >
-          {game.emoji}
-        </motion.span>
+        <div className="w-20 h-20 rounded-2xl bg-white/50 flex items-center justify-center shadow-lg">
+          <game.icon className="w-12 h-12 text-primary" />
+        </div>
       </div>
       <div className="p-6">
         <div className="flex items-start justify-between mb-2">

@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 
@@ -41,7 +41,9 @@ export default function PaymentResultPage() {
                   Order ID: <span className="font-mono font-semibold">{orderId.slice(0, 8).toUpperCase()}</span>
                 </p>
               )}
-              <div className="text-5xl mb-6">🎉</div>
+              <div className="flex justify-center mb-6">
+                <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
+              </div>
             </>
           )}
 
@@ -59,7 +61,9 @@ export default function PaymentResultPage() {
               <p className="text-muted-foreground mb-6">
                 Your payment could not be processed. Please try again or contact support.
               </p>
-              <div className="text-5xl mb-6">😞</div>
+              <div className="flex justify-center mb-6">
+                <AlertCircle className="w-8 h-8 text-red-400" />
+              </div>
             </>
           )}
 

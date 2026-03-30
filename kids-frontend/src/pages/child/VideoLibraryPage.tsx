@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Search, Play, Heart, Clock } from 'lucide-react';
+import { Search, Play, Heart, Clock, Video } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { videosApi, favoritesApi, Video, profilesApi } from '@/services';
+import { videosApi, favoritesApi, Video as VideoItem, profilesApi } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ export default function VideoLibraryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedAge, setSelectedAge] = useState('All Ages');
-  const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   // Fetch videos from API
@@ -63,7 +63,7 @@ export default function VideoLibraryPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
-      toast.success('❤️ Added to Favorites!');
+      toast.success('Added to Favorites!');
     },
     onError: (_err, videoId) => {
       // Revert optimistic update on error
@@ -111,7 +111,7 @@ export default function VideoLibraryPage() {
     }
   };
 
-  const handlePlayVideo = (video: Video) => {
+  const handlePlayVideo = (video: VideoItem) => {
     setPlayingVideo(video);
     profilesApi.incrementVideoCount()
       .then(() => {
@@ -136,8 +136,8 @@ export default function VideoLibraryPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
-              Video Library <span className="text-4xl">📺</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold mb-2 flex items-center gap-3">
+              Video Library <Video className="w-8 h-8 text-primary" />
             </h1>
             <p className="text-muted-foreground">Watch fun and educational videos!</p>
           </motion.div>
@@ -323,7 +323,7 @@ export default function VideoLibraryPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <div className="text-6xl mb-4">🔍</div>
+              <Search className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="text-xl font-bold mb-2">No videos found</h3>
               <p className="text-muted-foreground">Try adjusting your search or filters</p>
             </motion.div>

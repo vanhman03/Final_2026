@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Trophy, RotateCcw, Star, Zap, Eye } from "lucide-react";
+import { ArrowLeft, Trophy, RotateCcw, Star, Zap, Eye, Puzzle, HelpCircle, PartyPopper } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -152,7 +152,7 @@ export default function PuzzleGame() {
       colors: ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181"],
     });
 
-    toast.success(`🎉 All pairs found! +${earnedPoints} points!`);
+    toast.success(`All pairs found! +${earnedPoints} points!`);
 
     // Log game activity and check for badges
     try {
@@ -164,7 +164,7 @@ export default function PuzzleGame() {
       });
 
       if (response.newBadges && response.newBadges.length > 0) {
-        toast.success(`🎉 Huy hiệu mới: ${response.newBadges.join(', ')}`);
+        toast.success(`Huy hiệu mới: ${response.newBadges.join(', ')}`);
         confetti({
           particleCount: 200,
           spread: 100,
@@ -228,7 +228,9 @@ export default function PuzzleGame() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-extrabold">Puzzle Fun 🧩</h1>
+              <h1 className="text-3xl font-extrabold flex items-center gap-2">
+                Puzzle Fun <Puzzle className="w-8 h-8 text-primary" />
+              </h1>
               <p className="text-muted-foreground">Flip cards and find matching pairs!</p>
             </div>
           </motion.div>
@@ -357,7 +359,7 @@ export default function PuzzleGame() {
                             `}
                             style={{ backfaceVisibility: "hidden" }}
                           >
-                            <span className="text-3xl">❓</span>
+                            <HelpCircle className="w-12 h-12 text-white/50" />
                           </div>
 
                           {/* Card Front (face-up) */}
@@ -399,13 +401,7 @@ export default function PuzzleGame() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-6 bg-gradient-fun rounded-3xl p-8 text-center text-foreground shadow-glow"
               >
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-                  className="text-6xl mb-4"
-                >
-                  🎉
-                </motion.div>
+                <PartyPopper className="w-16 h-16 text-primary mx-auto mb-4" />
                 <h2 className="text-2xl font-extrabold mb-2">Awesome Job!</h2>
                 <p className="text-lg opacity-90 mb-4">You found all pairs in {moves} moves!</p>
                 <div className="flex justify-center gap-3">

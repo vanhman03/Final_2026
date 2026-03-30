@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Plus, Minus, CreditCard, Trash2, Star } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CreditCard, Trash2, Star, Gift, Package, CheckCircle2, XCircle, Store, ShoppingBag } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,7 +53,7 @@ export default function ShopPage() {
     },
     onSuccess: ({ order, paymentUrl }) => {
       toast({
-        title: 'Order created! 🎉',
+        title: 'Order created!',
         description: `Order #${order.id.slice(0, 8)} has been created. Redirecting to payment...`,
       });
       setCart([]);
@@ -78,7 +78,7 @@ export default function ShopPage() {
       if (existing) {
         if (existing.quantity >= (product.stock ?? 0)) {
           toast({
-            title: 'Hết hàng dự trữ ⚠️',
+            title: 'Hết hàng dự trữ',
             description: `Bạn đã thêm số lượng tối đa hiện có (${product.stock}).`,
             variant: 'destructive',
           });
@@ -92,7 +92,7 @@ export default function ShopPage() {
       }
       if ((product.stock ?? 0) <= 0) {
         toast({
-          title: 'Hết hàng ❌',
+          title: 'Hết hàng',
           description: 'Sản phẩm này đã hết hàng.',
           variant: 'destructive',
         });
@@ -101,7 +101,7 @@ export default function ShopPage() {
       return [...prev, { ...product, quantity: 1 }];
     });
     toast({
-      title: 'Đã thêm vào giỏ! 🛒',
+      title: 'Đã thêm vào giỏ!',
       description: `${product.name} đã được thêm vào giỏ hàng.`,
     });
   };
@@ -114,7 +114,7 @@ export default function ShopPage() {
             const newQuantity = item.quantity + delta;
             if (delta > 0 && newQuantity > (item.stock ?? 0)) {
               toast({
-                title: 'Không đủ hàng ⚠️',
+                title: 'Không đủ hàng',
                 description: `Sản phẩm này chỉ còn ${item.stock} trong kho.`,
                 variant: 'destructive',
               });
@@ -159,7 +159,7 @@ export default function ShopPage() {
           >
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
-                Toy Shop <span className="text-4xl">🎁</span>
+                Toy Shop <Gift className="inline-block w-8 h-8 text-pink-500 mb-1" />
               </h1>
               <p className="text-muted-foreground">Educational toys for your little learners!</p>
             </div>
@@ -226,11 +226,12 @@ export default function ShopPage() {
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
                       ) : (
-                        '🎁'
+                        <Package className="w-20 h-20 text-muted-foreground/20" />
                       )}
                       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
                         <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold shadow-sm backdrop-blur-sm ${product.in_stock ? 'bg-green-100/90 text-green-700 border border-green-200' : 'bg-red-100/90 text-red-700 border border-red-200'}`}>
-                          {product.in_stock ? '✅ Còn hàng' : '❌ Hết hàng'}
+                          {product.in_stock ? <CheckCircle2 className="w-3 h-3 inline mr-1" /> : <XCircle className="w-3 h-3 inline mr-1" />}
+                          {product.in_stock ? 'Còn hàng' : 'Hết hàng'}
                         </span>
                         <span className="text-[10px] md:text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-bold shadow-sm border border-slate-200 backdrop-blur-sm">
                           Số lượng: {product.stock ?? 0}
@@ -280,7 +281,7 @@ export default function ShopPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <div className="text-6xl mb-4">🏪</div>
+              <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="text-xl font-bold mb-2">No products available</h3>
               <p className="text-muted-foreground">Check back soon for new arrivals!</p>
             </motion.div>
@@ -304,7 +305,10 @@ export default function ShopPage() {
             >
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Your Cart 🛒</h2>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <ShoppingBag className="w-6 h-6 text-primary" />
+                    Your Cart
+                  </h2>
                   <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)}>
                     ✕
                   </Button>
@@ -314,7 +318,7 @@ export default function ShopPage() {
               <div className="flex-1 overflow-auto p-6">
                 {cart.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🛒</div>
+                    <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
                     <h3 className="text-xl font-bold mb-2">Cart is empty</h3>
                     <p className="text-muted-foreground">Add some toys to get started!</p>
                   </div>
@@ -333,7 +337,7 @@ export default function ShopPage() {
                           {item.image_url ? (
                             <img src={item.image_url} alt={item.name} className="w-full h-full object-contain rounded-xl" />
                           ) : (
-                            '🎁'
+                            <Package className="w-8 h-8 text-muted-foreground/20" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -409,7 +413,7 @@ export default function ShopPage() {
                 {selectedProduct.image_url ? (
                   <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-full h-full object-contain drop-shadow-2xl" />
                 ) : (
-                  '🎁'
+                  <Package className="w-32 h-32 text-muted-foreground/10" />
                 )}
               </div>
               <div className="w-full md:w-1/2 p-8 flex flex-col">

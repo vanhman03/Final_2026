@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, UserPlus, User, KeyRound } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, UserPlus, User, KeyRound, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,7 +88,7 @@ export default function RegisterPage() {
     try {
       await register(email, password, name, pin);
       toast({
-        title: 'Account created! 🎉',
+        title: 'Account created!',
         description: 'Welcome to EduKids! Let\'s start learning.',
       });
     } catch (error: any) {
@@ -128,7 +128,7 @@ export default function RegisterPage() {
             animate={{ scale: 1 }}
             transition={{ type: 'spring', bounce: 0.5 }}
           >
-            <span className="text-5xl">🌟</span>
+            <Star className="w-12 h-12 text-primary fill-current" />
           </motion.div>
           <span className="font-extrabold text-3xl text-gradient-hero">EduKids</span>
         </Link>

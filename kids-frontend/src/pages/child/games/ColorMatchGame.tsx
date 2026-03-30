@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Star, Trophy, RefreshCw, Home } from "lucide-react";
+import { ArrowLeft, Star, Trophy, RefreshCw, Home, Flame, PartyPopper, ThumbsUp, Dumbbell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -76,7 +76,7 @@ export default function ColorMatchGame() {
 
       if (newStreak >= 2) {
         toast({
-          title: `🔥 ${newStreak}x Streak!`,
+          title: `${newStreak}x Streak!`,
           description: "Double points earned!",
         });
       }
@@ -116,7 +116,7 @@ export default function ColorMatchGame() {
 
       if (response.newBadges && response.newBadges.length > 0) {
         toast({
-          title: "🎉 Huy hiệu mới!",
+          title: "Huy hiệu mới!",
           description: `Bạn vừa đạt được: ${response.newBadges.join(', ')}`,
           variant: "default",
         });
@@ -158,9 +158,15 @@ export default function ColorMatchGame() {
           animate={{ scale: 1, opacity: 1 }}
           className="bg-card rounded-3xl shadow-card border border-border p-8 max-w-md w-full text-center"
         >
-          <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 0.5 }} className="text-7xl mb-6">
-            {score >= 70 ? "🎉" : score >= 40 ? "👍" : "💪"}
-          </motion.div>
+          <div className="flex justify-center mb-6">
+            {score >= 70 ? (
+              <PartyPopper className="w-20 h-20 text-primary animate-bounce" />
+            ) : score >= 40 ? (
+              <ThumbsUp className="w-20 h-20 text-success" />
+            ) : (
+              <Dumbbell className="w-20 h-20 text-muted-foreground" />
+            )}
+          </div>
 
           <h1 className="text-3xl font-extrabold mb-2">Game Over!</h1>
           <p className="text-muted-foreground mb-6">Great job playing!</p>
@@ -220,7 +226,7 @@ export default function ColorMatchGame() {
                 animate={{ scale: 1 }}
                 className="bg-destructive/20 text-destructive px-3 py-1 rounded-full text-sm font-bold"
               >
-                🔥 {streak}x
+                <Flame className="w-4 h-4 inline mr-1" /> {streak}x
               </motion.div>
             )}
           </div>
@@ -284,12 +290,12 @@ export default function ColorMatchGame() {
                     <AnimatePresence>
                       {showResult && isTarget && (
                         <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-4xl">
-                          ✓
+                          <Check className="w-12 h-12 text-white" />
                         </motion.span>
                       )}
                       {showResult && isSelected && !isTarget && (
-                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-4xl">
-                          ✗
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-4xl text-white">
+                          <X className="w-12 h-12" />
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -308,7 +314,7 @@ export default function ColorMatchGame() {
                 exit={{ opacity: 0 }}
                 className={`mt-6 text-xl font-bold ${isCorrect ? "text-success" : "text-destructive"}`}
               >
-                {isCorrect ? "🎉 Correct!" : "😅 Try again next time!"}
+                {isCorrect ? "Correct!" : "Try again next time!"}
               </motion.div>
             )}
           </AnimatePresence>

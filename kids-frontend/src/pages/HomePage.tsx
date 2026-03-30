@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Play, Gamepad2, Trophy, Star, Clock, Heart } from 'lucide-react';
+import { Play, Gamepad2, Trophy, Star, Clock, Heart, User2, Video } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { videosApi, Video, profilesApi } from '@/services';
+import { videosApi, Video as VideoItem, profilesApi } from '@/services';
 
 const quickActions = [
   {
@@ -16,28 +16,24 @@ const quickActions = [
     label: 'Watch Videos',
     href: '/videos',
     color: 'bg-primary',
-    emoji: '📺',
   },
   {
     icon: Gamepad2,
     label: 'Play Games',
     href: '/games',
     color: 'bg-secondary',
-    emoji: '🎮',
   },
   {
     icon: Trophy,
     label: 'My Badges',
     href: '/badges',
     color: 'bg-accent',
-    emoji: '🏆',
   },
   {
     icon: Heart,
     label: 'Favorites',
     href: '/favorites',
     color: 'bg-success',
-    emoji: '❤️',
   },
 ];
 
@@ -56,7 +52,7 @@ const itemVariants = {
 
 export default function HomePage() {
   const { user, refreshUserData } = useAuth();
-  const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
 
   // Use user's profile data directly (no more child concept)
   const displayName = user?.name || 'Friend';
@@ -64,7 +60,7 @@ export default function HomePage() {
   const badges = user?.badges || [];
   const screenTimeLimit = user?.screenTimeLimit || 60;
   const screenTimeUsed = user?.totalWatchTime || 0;
-  const avatar = user?.avatar || '🦄';
+  const avatar = user?.avatar;
 
   const screenTimeProgress = Math.min((screenTimeUsed / screenTimeLimit) * 100, 100);
 
@@ -91,9 +87,9 @@ export default function HomePage() {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="text-6xl"
+                  className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"
                 >
-                  {avatar}
+                  {avatar && !avatar.includes('<') ? <span className="text-4xl">{avatar}</span> : <User2 className="w-10 h-10" />}
                 </motion.div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold">
@@ -135,10 +131,10 @@ export default function HomePage() {
                     whileTap={{ scale: 0.95 }}
                     className="bg-card rounded-3xl p-6 shadow-card border border-border hover:border-primary/30 transition-all flex flex-col items-center gap-3 text-center"
                   >
-                    <div className={`w-16 h-16 ${action.color} rounded-2xl flex items-center justify-center text-3xl`}>
-                      {action.emoji}
+                    <div className={`w-16 h-16 ${action.color} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
+                      <action.icon className="w-8 h-8" />
                     </div>
-                    <span className="font-bold text-lg">{action.label}</span>
+                    <span className="font-bold text-lg text-foreground">{action.label}</span>
                   </motion.div>
                 </Link>
               </motion.div>
@@ -199,7 +195,9 @@ export default function HomePage() {
             className="mb-8"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Continue Watching 📺</h2>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                Continue Watching <Video className="w-6 h-6 text-primary" />
+              </h2>
               <Link to="/videos">
                 <Button variant="ghost">See All</Button>
               </Link>
@@ -272,7 +270,7 @@ export default function HomePage() {
 
             {!videosLoading && recentVideos.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                <div className="text-4xl mb-2">📺</div>
+                <Video className="w-12 h-12 mx-auto mb-2 opacity-20" />
                 <p>No videos yet. Check back soon!</p>
               </div>
             )}
@@ -284,7 +282,9 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <h2 className="text-2xl font-bold mb-4">My Badges 🏆</h2>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              My Badges <Trophy className="w-6 h-6 text-primary" />
+            </h2>
             <div className="flex flex-wrap gap-3">
               {badges.length > 0 ? (
                 badges.map((badge, index) => (
@@ -296,7 +296,10 @@ export default function HomePage() {
                     whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                     className="bg-gradient-fun text-primary-foreground px-4 py-2 rounded-full font-bold shadow-button"
                   >
-                    ⭐ {badge}
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span>{badge}</span>
+                    </div>
                   </motion.div>
                 ))
               ) : (
