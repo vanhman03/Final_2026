@@ -12,7 +12,7 @@ export const ALL_BADGES: Badge[] = [
         id: '🌟 Star Learner', 
         label: 'Star Learner', 
         emoji: '🌟', 
-        desc: 'Học giỏi xuất sắc!', 
+        desc: 'Đạt 500 điểm trở lên', 
         color: 'from-yellow-400 to-orange-400',
         condition: (data) => data.points >= 500
     },
@@ -20,17 +20,17 @@ export const ALL_BADGES: Badge[] = [
         id: '🎮 Game Master', 
         label: 'Game Master', 
         emoji: '🎮', 
-        desc: 'Bậc thầy trò chơi!', 
+        desc: 'Tổng trò chơi đã chơi đạt 10 lần', 
         color: 'from-purple-400 to-indigo-500',
-        condition: (data) => data.totalGames >= 25
+        condition: (data) => data.totalGames >= 10
     },
     { 
         id: '📚 Bookworm', 
         label: 'Bookworm', 
         emoji: '📚', 
-        desc: 'Yêu thích đọc sách!', 
+        desc: 'Tổng video đã xem đạt 10 lần', 
         color: 'from-blue-400 to-cyan-400',
-        condition: (data) => (data.videos_watched_count ?? 0) >= 20
+        condition: (data) => (data.videos_watched_count ?? 0) >= 10
     }, 
     { 
         id: '🎨 Creative Kid', 

@@ -216,7 +216,7 @@ export default function ParentModePage() {
               { id: 'badges', icon: Trophy, value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
             ].map((stat) => (
               <motion.div key={stat.label} variants={itemVariants}
-                className={`bg-white dark:bg-card rounded-2xl p-5 shadow-md border ${stat.id === 'videos' ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1' : ''}`}
+                className={`bg-white dark:bg-card rounded-2xl p-5 shadow-md border ${stat.id === 'videos' ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg hover:ring-2 hover:ring-blue-200 transition-all duration-300 transform hover:scale-[1.03]' : ''}`}
                 onClick={() => stat.id === 'videos' && setShowRecentVideos(true)}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-3 shadow`}>

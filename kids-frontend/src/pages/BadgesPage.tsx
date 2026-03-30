@@ -106,8 +106,8 @@ export default function BadgesPage() {
                                         {earnedBadges.map((badge, idx) => (
                                             <motion.div key={badge.id}
                                                 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: 0.05 * idx, type: 'spring', stiffness: 200, rotate: { type: 'tween' } }}
-                                                whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
+                                                transition={{ delay: 0.05 * idx, type: 'spring', stiffness: 200 }}
+                                                whileHover={{ scale: 1.05 }}
                                                 className={`bg-gradient-to-br ${badge.color} rounded-3xl p-5 text-white shadow-lg text-center cursor-default relative overflow-hidden`}>
                                                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
                                                     <Check className="w-4 h-4 text-white" />
