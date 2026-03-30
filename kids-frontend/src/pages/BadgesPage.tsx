@@ -9,10 +9,10 @@ import { profilesApi } from '@/services/profilesApi';
 
 // ─── Badge definitions (all possible badges in the system) ───────────────────
 const ALL_BADGES = [
-    { id: '🌟 Star Learner', label: 'Star Learner', icon: Star, desc: 'Học giỏi xuất sắc!', color: 'from-yellow-400 to-orange-400' },
-    { id: '🎮 Game Master', label: 'Game Master', icon: Gamepad2, desc: 'Bậc thầy trò chơi!', color: 'from-purple-400 to-indigo-500' },
-    { id: '📚 Bookworm', label: 'Bookworm', icon: Book, desc: 'Yêu thích đọc sách!', color: 'from-blue-400 to-cyan-400' },
-    { id: '🏆 Top Scorer', label: 'Top Scorer', icon: Trophy, desc: 'Người ghi điểm cao nhất!', color: 'from-amber-400 to-yellow-500' },
+    { id: '🌟 Star Learner', label: 'Star Learner', icon: Star, desc: 'Đạt 500 điểm trở lên', color: 'from-yellow-400 to-orange-400' },
+    { id: '🎮 Game Master', label: 'Game Master', icon: Gamepad2, desc: 'Tổng trò chơi đã chơi đạt 10 lần', color: 'from-purple-400 to-indigo-500' },
+    { id: '📚 Bookworm', label: 'Bookworm', icon: Book, desc: 'Tổng video đã xem đạt 10 lần', color: 'from-blue-400 to-cyan-400' },
+    { id: '🏆 Top Scorer', label: 'Top Scorer', icon: Trophy, desc: 'Đạt điểm trên 100', color: 'from-amber-400 to-yellow-500' },
     { id: '🔥 Color Streak Master', label: 'Color Streak Master', icon: Flame, desc: '8 chuỗi thắng liên tiếp trong Color Match!', color: 'from-orange-500 to-red-600' },
     { id: '🧩 Puzzle Pro', label: 'Puzzle Pro', icon: Puzzle, desc: 'Hoàn thành Puzzle mức độ Trung bình!', color: 'from-blue-500 to-indigo-600' },
     { id: '🧠 Puzzle Zen Master', label: 'Puzzle Zen Master', icon: Brain, desc: 'Hoàn thành Puzzle mức độ Khó!', color: 'from-purple-600 to-pink-600' },

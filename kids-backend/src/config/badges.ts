@@ -32,19 +32,12 @@ export const ALL_BADGES: Badge[] = [
         color: 'from-blue-400 to-cyan-400',
         condition: (data) => (data.videos_watched_count ?? 0) >= 10
     }, 
-    { 
-        id: '🎨 Creative Kid', 
-        label: 'Creative Kid', 
-        emoji: '🎨', 
-        desc: 'Bé sáng tạo tuyệt vời!', 
-        color: 'from-pink-400 to-fuchsia-500',
-        condition: () => false // Placeholder — no earnable mechanic yet
-    },
+
     { 
         id: '🏆 Top Scorer', 
         label: 'Top Scorer', 
         emoji: '🏆', 
-        desc: 'Người ghi điểm cao nhất!', 
+        desc: 'Đạt điểm trên 100', 
         color: 'from-amber-400 to-yellow-500',
         condition: (data) => data.score >= 100
     },
@@ -81,8 +74,7 @@ export const ALL_BADGES: Badge[] = [
         condition: (data, currentBadges: string[] = []) => {
             const otherBadgeIds = ALL_BADGES
                 .filter(b => b.id !== '🌈 Rainbow Achiever')
-                .map(b => b.id)
-                .filter(id => id !== '🎨 Creative Kid'); // exclude unobtainable placeholder
+                .map(b => b.id);
             return otherBadgeIds.every(id => currentBadges.includes(id));
         }
     },
