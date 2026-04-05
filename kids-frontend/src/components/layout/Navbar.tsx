@@ -33,6 +33,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showForgotPinModal, setShowForgotPinModal] = useState(false);
+  const [pinPurpose, setPinPurpose] = useState<'parent-mode' | 'shop'>('parent-mode');
 
   const handleLogout = () => {
     deactivateParentMode();
@@ -44,14 +45,29 @@ export function Navbar() {
     if (isParentModeActive) {
       navigate("/parent-mode");
     } else {
+      setPinPurpose('parent-mode');
       setShowPinModal(true);
     }
+  };
+
+  const handleNavItemClick = (item: { label: string, href: string }) => {
+    if (item.label === "Shop" && !isParentModeActive && user?.role === "parent") {
+      setPinPurpose('shop');
+      setShowPinModal(true);
+      return;
+    }
+    navigate(item.href);
+    if (isMenuOpen) setIsMenuOpen(false);
   };
 
   const handlePinSuccess = () => {
     setShowPinModal(false);
     activateParentMode();
-    navigate("/parent-mode");
+    if (pinPurpose === 'shop') {
+      navigate("/shop");
+    } else {
+      navigate("/parent-mode");
+    }
   };
 
   const handleForgotPin = () => {
@@ -121,12 +137,16 @@ export function Navbar() {
             {user && (
               <div className="hidden md:flex items-center gap-2">
                 {navItems.map((item) => (
-                  <Link key={item.href} to={item.href}>
-                    <Button variant="ghost" size="lg" className="gap-2">
-                      <item.icon className="w-5 h-5" />
-                      {item.label}
-                    </Button>
-                  </Link>
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    size="lg"
+                    className="gap-2"
+                    onClick={() => handleNavItemClick(item)}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </Button>
                 ))}
               </div>
             )}
@@ -233,19 +253,15 @@ export function Navbar() {
             >
               <div className="flex flex-col gap-2">
                 {navItems.map((item) => (
-                  <Link
+                  <Button
                     key={item.href}
-                    to={item.href}
-                    onClick={() => setIsMenuOpen(false)}
+                    variant="ghost"
+                    className="w-full justify-start gap-3"
+                    onClick={() => handleNavItemClick(item)}
                   >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3"
-                    >
-                      <item.icon className="w-5 h-5" />
-                      {item.label}
-                    </Button>
-                  </Link>
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </Button>
                 ))}
                 {user.role === "parent" && (
                   <>
