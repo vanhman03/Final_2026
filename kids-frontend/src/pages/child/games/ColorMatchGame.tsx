@@ -9,6 +9,7 @@ import confetti from "canvas-confetti";
 import { useAuth } from "@/context/AuthContext";
 import { gamesApi } from "@/services/gamesApi";
 import { profilesApi } from "@/services/profilesApi";
+import { useTranslation } from "react-i18next";
 
 interface ColorOption {
   name: string;
@@ -31,6 +32,7 @@ const TOTAL_ROUNDS = 10;
 const POINTS_PER_CORRECT = 10;
 
 export default function ColorMatchGame() {
+  const { t } = useTranslation();
   const { user, refreshUserData } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -76,8 +78,8 @@ export default function ColorMatchGame() {
 
       if (newStreak >= 2) {
         toast({
-          title: `${newStreak}x Streak!`,
-          description: "Double points earned!",
+          title: t('games.colorMatch.streak', { count: newStreak }),
+          description: t('games.colorMatch.streakDesc'),
         });
       }
     } else {
@@ -116,8 +118,8 @@ export default function ColorMatchGame() {
 
       if (response.newBadges && response.newBadges.length > 0) {
         toast({
-          title: "Huy hiệu mới!",
-          description: `Bạn vừa đạt được: ${response.newBadges.join(', ')}`,
+          title: t('games.common.newBadge'),
+          description: t('games.common.badgeEarned', { badges: response.newBadges.join(', ') }),
           variant: "default",
         });
         confetti({
@@ -149,7 +151,7 @@ export default function ColorMatchGame() {
   const progress = (currentRound / TOTAL_ROUNDS) * 100;
 
   if (gameOver) {
-    const earnedBadge = score >= 80 ? "Color Master" : score >= 50 ? "Color Explorer" : null;
+    const earnedBadge = score >= 80 ? t('games.colorMatch.badges.master') : score >= 50 ? t('games.colorMatch.badges.explorer') : null;
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-secondary/5 to-background flex items-center justify-center p-4">
@@ -168,15 +170,15 @@ export default function ColorMatchGame() {
             )}
           </div>
 
-          <h1 className="text-3xl font-extrabold mb-2">Game Over!</h1>
-          <p className="text-muted-foreground mb-6">Great job playing!</p>
+          <h1 className="text-3xl font-extrabold mb-2">{t('games.common.gameOver')}</h1>
+          <p className="text-muted-foreground mb-6">{t('games.common.greatJob')}</p>
 
           <div className="bg-muted rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Star className="w-8 h-8 text-warning fill-warning" />
               <span className="text-4xl font-extrabold">{score}</span>
             </div>
-            <p className="text-muted-foreground">Total Points Earned</p>
+            <p className="text-muted-foreground">{t('games.common.pointsEarned')}</p>
           </div>
 
           {earnedBadge && (
@@ -194,11 +196,11 @@ export default function ColorMatchGame() {
           <div className="flex flex-col gap-3">
             <Button variant="hero" size="lg" onClick={restartGame} className="gap-2">
               <RefreshCw className="w-5 h-5" />
-              Play Again
+              {t('games.common.playAgain')}
             </Button>
             <Button variant="outline" size="lg" onClick={() => navigate("/games")} className="gap-2">
               <Home className="w-5 h-5" />
-              Back to Games
+              {t('games.common.backToGames')}
             </Button>
           </div>
         </motion.div>
@@ -236,7 +238,7 @@ export default function ColorMatchGame() {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-muted-foreground mb-2">
             <span>
-              Round {currentRound} of {TOTAL_ROUNDS}
+              {t('games.common.round', { current: currentRound, total: TOTAL_ROUNDS })}
             </span>
             <span>{Math.round(progress)}%</span>
           </div>
@@ -250,7 +252,7 @@ export default function ColorMatchGame() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-3xl shadow-card border border-border p-8 text-center"
         >
-          <h2 className="text-xl font-bold text-muted-foreground mb-4">Tap the color:</h2>
+          <h2 className="text-xl font-bold text-muted-foreground mb-4">{t('games.colorMatch.tap')}</h2>
 
           <motion.div
             initial={{ scale: 0.8 }}
@@ -258,7 +260,7 @@ export default function ColorMatchGame() {
             className="text-4xl md:text-5xl font-extrabold mb-8"
             style={{ color: targetColor.hex }}
           >
-            {targetColor.name}
+            {t(`games.colors.${targetColor.name.toLowerCase()}`)}
           </motion.div>
 
           {/* Color Options */}
@@ -314,7 +316,7 @@ export default function ColorMatchGame() {
                 exit={{ opacity: 0 }}
                 className={`mt-6 text-xl font-bold ${isCorrect ? "text-success" : "text-destructive"}`}
               >
-                {isCorrect ? "Correct!" : "Try again next time!"}
+                {isCorrect ? t('games.common.correct') : t('games.common.tryAgain')}
               </motion.div>
             )}
           </AnimatePresence>

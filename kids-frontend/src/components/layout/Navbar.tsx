@@ -24,7 +24,11 @@ import {
 import { PinModal } from "@/components/PinModal";
 import { ForgotPinModal } from "@/components/ForgotPinModal";
 
+import { useTranslation } from "react-i18next";
+import { LanguageToggle } from "@/components/LanguageToggle";
+
 export function Navbar() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { isParentModeActive, activateParentMode, deactivateParentMode } =
     useParentMode();
@@ -90,16 +94,16 @@ export function Navbar() {
 
     if (user.role === "admin") {
       return [
-        { label: "Dashboard", icon: Home, href: "/admin/dashboard" },
+        { label: t('nav.dashboard'), icon: Home, href: "/admin/dashboard" },
       ];
     }
 
     // Parent role - main child-friendly UI
     return [
-      { label: "Home", icon: Home, href: "/home" },
-      { label: "Videos", icon: Play, href: "/videos" },
-      { label: "Games", icon: Gamepad2, href: "/games" },
-      { label: "Shop", icon: ShoppingBag, href: "/shop" },
+      { label: t('nav.home'), icon: Home, href: "/home" },
+      { label: t('nav.videos'), icon: Play, href: "/videos" },
+      { label: t('nav.games'), icon: Gamepad2, href: "/games" },
+      { label: t('nav.shop'), icon: ShoppingBag, href: "/shop" },
     ];
   };
 
@@ -153,6 +157,8 @@ export function Navbar() {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
+              <LanguageToggle />
+              
               {user ? (
                 <>
                   {/* Parent Mode Button - Only for parent role */}
@@ -175,7 +181,7 @@ export function Navbar() {
                             className="gap-2 bg-primary"
                           >
                             <Shield className="w-4 h-4" />
-                            Parent Mode
+                            {t('common.parentMode')}
                           </Button>
 
                           <Button
@@ -183,7 +189,7 @@ export function Navbar() {
                             size="sm"
                             onClick={handleExitParentMode}
                           >
-                            Exit
+                            {t('common.exit')}
                           </Button>
                         </div>
                       ) : (
@@ -194,7 +200,7 @@ export function Navbar() {
                           className="hidden md:flex gap-2"
                         >
                           <Shield className="w-4 h-4" />
-                          Parent Mode
+                          {t('common.parentMode')}
                         </Button>
                       )}
                     </>
@@ -231,11 +237,11 @@ export function Navbar() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Link to="/login">
-                    <Button variant="outline">Log In</Button>
+                    <Button variant="outline">{t('common.login')}</Button>
                   </Link>
                   <Link to="/register">
                     <Button variant="hero" className="hidden sm:flex">
-                      Get Started
+                      {t('common.getStarted')}
                     </Button>
                   </Link>
                 </div>
@@ -282,7 +288,7 @@ export function Navbar() {
                           }}
                         >
                           <Shield className="w-5 h-5" />
-                          Parent Mode (Active)
+                          {t('common.parentModeActive')}
                         </Button>
                         <Button
                           variant="outline"
@@ -329,8 +335,8 @@ export function Navbar() {
         onClose={() => setShowPinModal(false)}
         onSuccess={handlePinSuccess}
         onForgotPin={handleForgotPin}
-        title="Enter Parent PIN"
-        description="Enter your PIN to access Parent Mode"
+        title={t('pin.modal.title')}
+        description={t('pin.modal.description')}
       />
 
       <ForgotPinModal

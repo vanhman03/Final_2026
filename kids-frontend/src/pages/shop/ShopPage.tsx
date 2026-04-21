@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 interface CartItem extends Product {
   quantity: number;
@@ -29,6 +30,7 @@ const formatVND = (amount: number) => {
 };
 
 export default function ShopPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -53,8 +55,8 @@ export default function ShopPage() {
     },
     onSuccess: ({ order, paymentUrl }) => {
       toast({
-        title: 'Order created!',
-        description: `Order #${order.id.slice(0, 8)} has been created. Redirecting to payment...`,
+        title: t('shop.messages.orderCreated'),
+        description: t('shop.messages.orderCreatedDesc', { id: order.id.slice(0, 8) }),
       });
       setCart([]);
       setIsCartOpen(false);
@@ -63,7 +65,7 @@ export default function ShopPage() {
     },
     onError: (error) => {
       toast({
-        title: 'Failed to create order',
+        title: t('shop.messages.failedToCreateOrder'),
         description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
@@ -78,8 +80,8 @@ export default function ShopPage() {
       if (existing) {
         if (existing.quantity >= (product.stock ?? 0)) {
           toast({
-            title: 'Hết hàng dự trữ',
-            description: `Bạn đã thêm số lượng tối đa hiện có (${product.stock}).`,
+            title: t('shop.messages.maxStock'),
+            description: t('shop.messages.maxStockDesc', { count: product.stock }),
             variant: 'destructive',
           });
           return prev;
@@ -92,8 +94,8 @@ export default function ShopPage() {
       }
       if ((product.stock ?? 0) <= 0) {
         toast({
-          title: 'Hết hàng',
-          description: 'Sản phẩm này đã hết hàng.',
+          title: t('shop.messages.outOfStock'),
+          description: t('shop.messages.outOfStockDesc'),
           variant: 'destructive',
         });
         return prev;
@@ -101,8 +103,8 @@ export default function ShopPage() {
       return [...prev, { ...product, quantity: 1 }];
     });
     toast({
-      title: 'Đã thêm vào giỏ!',
-      description: `${product.name} đã được thêm vào giỏ hàng.`,
+      title: t('shop.messages.addedToCart'),
+      description: t('shop.messages.addedToCartDesc', { name: product.name }),
     });
   };
 
@@ -114,8 +116,8 @@ export default function ShopPage() {
             const newQuantity = item.quantity + delta;
             if (delta > 0 && newQuantity > (item.stock ?? 0)) {
               toast({
-                title: 'Không đủ hàng',
-                description: `Sản phẩm này chỉ còn ${item.stock} trong kho.`,
+                title: t('shop.messages.maxStock'),
+                description: t('shop.messages.maxStockDesc', { count: item.stock }),
                 variant: 'destructive',
               });
               return item;
@@ -138,8 +140,8 @@ export default function ShopPage() {
   const handleCheckout = () => {
     if (!user) {
       toast({
-        title: 'Please log in',
-        description: 'You need to be logged in to checkout.',
+        title: t('shop.messages.loginToCheckout'),
+        description: t('shop.messages.loginToCheckout'),
         variant: 'destructive',
       });
       return;
@@ -159,9 +161,9 @@ export default function ShopPage() {
           >
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
-                Toy Shop <Gift className="inline-block w-8 h-8 text-pink-500 mb-1" />
+                {t('shop.title')} <Gift className="inline-block w-8 h-8 text-pink-500 mb-1" />
               </h1>
-              <p className="text-muted-foreground">Educational toys for your little learners!</p>
+              <p className="text-muted-foreground">{t('shop.subtitle')}</p>
             </div>
 
             <Button
@@ -171,7 +173,7 @@ export default function ShopPage() {
               onClick={() => setIsCartOpen(true)}
             >
               <ShoppingCart className="w-5 h-5" />
-              Cart
+              {t('shop.cart')}
               {totalItems > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -231,10 +233,10 @@ export default function ShopPage() {
                       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
                         <span className={`text-[10px] md:text-xs px-2 py-1 rounded-full font-bold shadow-sm backdrop-blur-sm ${product.in_stock ? 'bg-green-100/90 text-green-700 border border-green-200' : 'bg-red-100/90 text-red-700 border border-red-200'}`}>
                           {product.in_stock ? <CheckCircle2 className="w-3 h-3 inline mr-1" /> : <XCircle className="w-3 h-3 inline mr-1" />}
-                          {product.in_stock ? 'Còn hàng' : 'Hết hàng'}
+                          {product.in_stock ? t('shop.inStock') : t('shop.outOfStock')}
                         </span>
                         <span className="text-[10px] md:text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-bold shadow-sm border border-slate-200 backdrop-blur-sm">
-                          Số lượng: {product.stock ?? 0}
+                          {t('shop.stockCount', { count: product.stock ?? 0 })}
                         </span>
                       </div>
                     </div>
@@ -263,10 +265,10 @@ export default function ShopPage() {
                       {product.in_stock ? (
                         <>
                           <Plus className="w-4 h-4" />
-                          Add to Cart
+                          {t('shop.addToCart')}
                         </>
                       ) : (
-                        'Hết hàng'
+                        t('shop.outOfStock')
                       )}
                     </Button>
                   </div>
@@ -282,8 +284,8 @@ export default function ShopPage() {
               className="text-center py-16"
             >
               <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <h3 className="text-xl font-bold mb-2">No products available</h3>
-              <p className="text-muted-foreground">Check back soon for new arrivals!</p>
+              <h3 className="text-xl font-bold mb-2">{t('shop.noProducts')}</h3>
+              <p className="text-muted-foreground">{t('shop.noProductsDesc')}</p>
             </motion.div>
           )}
         </div>
@@ -307,7 +309,7 @@ export default function ShopPage() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
                     <ShoppingBag className="w-6 h-6 text-primary" />
-                    Your Cart
+                    {t('shop.yourCart')}
                   </h2>
                   <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(false)}>
                     ✕
@@ -319,8 +321,8 @@ export default function ShopPage() {
                 {cart.length === 0 ? (
                   <div className="text-center py-12">
                     <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
-                    <h3 className="text-xl font-bold mb-2">Cart is empty</h3>
-                    <p className="text-muted-foreground">Add some toys to get started!</p>
+                    <h3 className="text-xl font-bold mb-2">{t('shop.cartEmpty')}</h3>
+                    <p className="text-muted-foreground">{t('shop.cartEmptyDesc')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -382,7 +384,7 @@ export default function ShopPage() {
               {cart.length > 0 && (
                 <div className="p-6 border-t border-border">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-medium">Total:</span>
+                    <span className="text-lg font-medium">{t('shop.total')}:</span>
                     <span className="text-2xl font-extrabold text-gradient-hero">
                       {formatVND(totalPrice)}
                     </span>
@@ -395,7 +397,7 @@ export default function ShopPage() {
                     disabled={createOrderMutation.isPending}
                   >
                     <CreditCard className="w-5 h-5" />
-                    {createOrderMutation.isPending ? 'Processing...' : 'Checkout with VNPay'}
+                    {createOrderMutation.isPending ? t('shop.processing') : t('shop.checkout')}
                   </Button>
                 </div>
               )}
@@ -423,7 +425,7 @@ export default function ShopPage() {
                       {selectedProduct.category || 'Toys'}
                     </Badge>
                     <Badge variant="outline" className={selectedProduct.in_stock ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-500 border-red-200 bg-red-50'}>
-                      {selectedProduct.in_stock ? 'Còn hàng' : 'Hết hàng'}
+                      {selectedProduct.in_stock ? t('shop.inStock') : t('shop.outOfStock')}
                     </Badge>
                   </div>
                   <DialogTitle className="text-2xl font-extrabold leading-tight mb-2">
@@ -436,15 +438,14 @@ export default function ShopPage() {
 
                 <div className="flex-1 space-y-6">
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Mô tả sản phẩm</h4>
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">{t('shop.descriptionLabel')}</h4>
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap italic">
-                      {selectedProduct.description || 'Không có mô tả cho sản phẩm này.'}
+                      {selectedProduct.description || t('shop.noDescription')}
                     </p>
                   </div>
 
                   <div className="bg-secondary/5 rounded-2xl p-4 border border-secondary/10 flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Số lượng có sẵn:</span>
-                    <span className="font-bold text-lg">{selectedProduct.stock} sản phẩm</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t('shop.stockAvailable', { count: selectedProduct.stock })}</span>
                   </div>
                 </div>
 
@@ -462,10 +463,10 @@ export default function ShopPage() {
                     {selectedProduct.in_stock ? (
                       <>
                         <Plus className="w-5 h-5" />
-                        Thêm vào giỏ hàng
+                        {t('shop.addToCart')}
                       </>
                     ) : (
-                      'Tạm hết hàng'
+                      t('shop.outOfStock')
                     )}
                   </Button>
                 </div>

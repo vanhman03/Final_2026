@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth, PinVerificationError } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 60 * 1000; // 1 minute
@@ -23,30 +24,15 @@ interface PinModalProps {
   description?: string;
 }
 
-const getErrorMessage = (error: PinVerificationError): string => {
-  switch (error) {
-    case "NOT_LOGGED_IN":
-      return "Please log in to continue.";
-    case "DATABASE_ERROR":
-      return "Unable to verify PIN. Please try again.";
-    case "NO_PIN_SET":
-      return "No PIN has been set for this account. Please set a PIN in settings.";
-    case "INCORRECT_PIN":
-      return "Incorrect PIN. Please try again.";
-    case "UNKNOWN_ERROR":
-    default:
-      return "An unexpected error occurred. Please try again.";
-  }
-};
-
 export function PinModal({
   isOpen,
   onClose,
   onSuccess,
   onForgotPin,
-  title = "Enter PIN",
-  description = "Please enter your 4-6 digit PIN to continue",
+  title,
+  description,
 }: PinModalProps) {
+  const { t } = useTranslation();
   const [pin, setPin] = useState("");
   const [showPin, setShowPin] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -56,6 +42,22 @@ export function PinModal({
 
   const { verifyPinWithDetails, user } = useAuth();
   const { toast } = useToast();
+
+  const getErrorMessage = (error: PinVerificationError): string => {
+    switch (error) {
+      case "NOT_LOGGED_IN":
+        return t('pin.errors.notLoggedIn');
+      case "DATABASE_ERROR":
+        return t('pin.errors.databaseError');
+      case "NO_PIN_SET":
+        return t('pin.errors.noPinSet');
+      case "INCORRECT_PIN":
+        return t('pin.errors.incorrectPin');
+      case "UNKNOWN_ERROR":
+      default:
+        return t('pin.errors.unknownError');
+    }
+  };
 
   const storageKeys = getStorageKeys(user?.id);
 
@@ -118,8 +120,8 @@ export function PinModal({
 
     if (isLocked) {
       toast({
-        title: "Account Locked",
-        description: `Too many failed attempts. Try again in ${remainingTime}.`,
+        title: t('pin.lockout.title'),
+        description: t('pin.lockout.description', { time: remainingTime }),
         variant: "destructive",
       });
       return;
@@ -127,8 +129,8 @@ export function PinModal({
 
     if (pin.length < 4 || pin.length > 6) {
       toast({
-        title: "Invalid PIN",
-        description: "PIN must be 4-6 digits.",
+        title: t('pin.errors.invalidPin'),
+        description: t('pin.errors.invalidPinDesc'),
         variant: "destructive",
       });
       return;
@@ -156,20 +158,19 @@ export function PinModal({
           localStorage.setItem(storageKeys.lockout, lockoutTime.toString());
 
           toast({
-            title: "Account Locked",
-            description:
-              "Too many failed attempts. Please try again in 1 minute.",
+            title: t('pin.lockout.title'),
+            description: t('pin.lockout.descriptionShort'),
             variant: "destructive",
           });
         } else {
           const remainingAttempts = MAX_ATTEMPTS - newAttempts;
           const errorMessage = result.error
             ? getErrorMessage(result.error)
-            : "Verification failed.";
+            : t('pin.errors.unknownError');
 
           toast({
-            title: "Verification Failed",
-            description: `${errorMessage} ${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} remaining.`,
+            title: t('pin.errors.failed'),
+            description: `${errorMessage} ${t('pin.errors.attemptsRemaining', { count: remainingAttempts })}.`,
             variant: "destructive",
           });
         }
@@ -178,8 +179,8 @@ export function PinModal({
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to verify PIN. Please try again.",
+        title: t('common.error'),
+        description: t('pin.errors.databaseError'),
         variant: "destructive",
       });
     } finally {
@@ -237,12 +238,12 @@ export function PinModal({
                 )}
               </div>
               <h2 className="text-xl font-bold mb-2">
-                {isLocked ? "Account Locked" : title}
+                {isLocked ? t('pin.lockout.title') : (title || t('pin.modal.title'))}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {isLocked
-                  ? `Too many failed attempts. Try again in ${remainingTime}.`
-                  : description}
+                  ? t('pin.lockout.description', { time: remainingTime })
+                  : (description || t('pin.modal.description'))}
               </p>
             </div>
 
@@ -251,7 +252,7 @@ export function PinModal({
                 <div className="relative">
                   <Input
                     type={showPin ? "text" : "password"}
-                    placeholder="Enter PIN"
+                    placeholder={t('pin.modal.placeholder')}
                     value={pin}
                     onChange={(e) =>
                       setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
@@ -297,10 +298,10 @@ export function PinModal({
                   {isVerifying ? (
                     <span className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      Verifying...
+                      {t('pin.modal.verifying')}
                     </span>
                   ) : (
-                    "Verify PIN"
+                    t('pin.modal.verify')
                   )}
                 </Button>
 
@@ -311,7 +312,7 @@ export function PinModal({
                     onClick={handleForgotPin}
                     className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    Forgot PIN?
+                    {t('pin.modal.forgot')}
                   </button>
                 )}
               </form>
@@ -324,7 +325,7 @@ export function PinModal({
                     {remainingTime}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Time remaining until unlock
+                    {t('pin.lockout.timeRemaining')}
                   </p>
                 </div>
 
@@ -334,7 +335,7 @@ export function PinModal({
                     className="w-full"
                     onClick={handleForgotPin}
                   >
-                    Reset PIN via Email
+                    {t('pin.modal.resetEmail')}
                   </Button>
                 )}
               </div>

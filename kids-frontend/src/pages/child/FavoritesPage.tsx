@@ -9,8 +9,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { favoritesApi, profilesApi, Favorite } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function FavoritesPage() {
+  const { t } = useTranslation();
   const { user, refreshUserData } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,10 +42,10 @@ export default function FavoritesPage() {
     mutationFn: (id: string) => favoritesApi.removeFavorite(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
-      toast.success('Removed from favorites');
+      toast.success(t('favorites.messages.removed'));
     },
     onError: () => {
-      toast.error('Failed to remove from favorites');
+      toast.error(t('favorites.messages.failedToRemove'));
     },
   });
 
@@ -73,10 +75,10 @@ export default function FavoritesPage() {
                 <Heart className="w-10 h-10 text-destructive fill-destructive" />
               </motion.div>
               <h1 className="text-3xl md:text-4xl font-extrabold">
-                My Favorites
+                {t('favorites.title')}
               </h1>
             </div>
-            <p className="text-muted-foreground">Your saved videos all in one place!</p>
+            <p className="text-muted-foreground">{t('favorites.subtitle')}</p>
           </motion.div>
 
           {/* Video Player Modal */}
@@ -106,7 +108,7 @@ export default function FavoritesPage() {
                   <h2 className="text-2xl font-bold mb-2">{playingVideo.title}</h2>
                   <div className="flex items-center gap-4 text-muted-foreground">
                     <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                      {playingVideo.category}
+                      {t(`videos.categories.${playingVideo.category}`)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -118,7 +120,7 @@ export default function FavoritesPage() {
                     className="mt-4"
                     onClick={() => setPlayingVideo(null)}
                   >
-                    Close Video
+                    {t('common.close')}
                   </Button>
                 </div>
               </motion.div>
@@ -134,11 +136,12 @@ export default function FavoritesPage() {
           >
             <div className="relative max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="Search favorites..."
+              <input
+                type="text"
+                placeholder={t('favorites.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 rounded-xl"
+                className="w-full pl-12 h-12 rounded-xl bg-background border border-input focus:ring-2 focus:ring-primary outline-none transition-all"
               />
             </div>
           </motion.div>
@@ -151,7 +154,7 @@ export default function FavoritesPage() {
             className="mb-6"
           >
             <span className="text-muted-foreground">
-              {filteredFavorites.length} {filteredFavorites.length === 1 ? 'video' : 'videos'} saved
+              {t('favorites.count', { count: filteredFavorites.length })}
             </span>
           </motion.div>
 
@@ -229,10 +232,10 @@ export default function FavoritesPage() {
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">{favorite.video?.title}</h3>
                     <div className="flex items-center justify-between mb-3">
                       <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {favorite.video?.category}
+                        {favorite.video?.category ? t(`videos.categories.${favorite.video.category}`) : ''}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        Ages {favorite.video?.age_group}
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {t('videos.agePrefix')} {favorite.video?.age_group}
                       </span>
                     </div>
                     <Button
@@ -243,7 +246,7 @@ export default function FavoritesPage() {
                       className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
+                      {t('common.remove')}
                     </Button>
                   </div>
                 </motion.div>
@@ -258,12 +261,14 @@ export default function FavoritesPage() {
               className="text-center py-16"
             >
               <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
-              <h3 className="text-xl font-bold mb-2">No favorites yet</h3>
+              <h3 className="text-xl font-bold mb-2">
+                {searchQuery ? t('favorites.noResults') : t('favorites.noFavorites')}
+              </h3>
               <p className="text-muted-foreground mb-6">
-                {searchQuery ? 'No videos match your search' : 'Start adding videos to your favorites!'}
+                {searchQuery ? '' : t('favorites.noFavoritesDesc')}
               </p>
               <Button variant="fun" asChild>
-                <a href="/videos">Browse Videos</a>
+                <a href="/videos">{t('favorites.browseVideos')}</a>
               </Button>
             </motion.div>
           )}

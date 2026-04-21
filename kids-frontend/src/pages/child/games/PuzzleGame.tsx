@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, RotateCcw, Star, Zap, Eye, Puzzle, HelpCircle, PartyPopper } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -9,6 +9,7 @@ import confetti from "canvas-confetti";
 import { useAuth } from "@/context/AuthContext";
 import { gamesApi } from "@/services/gamesApi";
 import { profilesApi } from "@/services/profilesApi";
+import { useTranslation } from "react-i18next";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -27,32 +28,27 @@ interface DifficultyConfig {
   points: number;
 }
 
-const difficultyConfig: Record<Difficulty, DifficultyConfig> = {
-  easy: { pairs: 2, cols: 2, label: "Easy (2x2)", points: 25 },
-  medium: { pairs: 6, cols: 4, label: "Medium (4x3)", points: 50 },
-  hard: { pairs: 8, cols: 4, label: "Hard (4x4)", points: 100 },
-};
-
-const puzzleThemes = [
+const puzzleThemesBase = [
   {
-    name: "Animals",
+    id: "animals",
     emojis: ["🐶", "🐱", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🐦"],
   },
   {
-    name: "Food",
+    id: "food",
     emojis: ["🍎", "🍊", "🍋", "🍇", "🍓", "🍒", "🍑", "🥭", "🍍", "🥝", "🍌", "🍉", "🥕", "🌽", "🍕", "🍔"],
   },
   {
-    name: "Space",
+    id: "space",
     emojis: ["🚀", "🌟", "🌙", "☀️", "🪐", "⭐", "🌍", "🛸", "👽", "🌈", "☄️", "🔭", "🌌", "💫", "🌠", "✨"],
   },
   {
-    name: "Sports",
+    id: "sports",
     emojis: ["⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏉", "🎱", "🏓", "🏸", "🥊", "⛳", "🎯", "🏆", "🥇", "🎮"],
   },
 ];
 
 export default function PuzzleGame() {
+  const { t } = useTranslation();
   const { user, refreshUserData } = useAuth();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [cards, setCards] = useState<Card[]>([]);
@@ -61,23 +57,27 @@ export default function PuzzleGame() {
   const [matchedPairs, setMatchedPairs] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [score, setScore] = useState(0);
-  const [currentTheme, setCurrentTheme] = useState(0);
+  const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
 
+  const difficultyConfig: Record<Difficulty, DifficultyConfig> = useMemo(() => ({
+    easy: { pairs: 2, cols: 2, label: t('games.puzzleGame.difficulty.easy'), points: 25 },
+    medium: { pairs: 6, cols: 4, label: t('games.puzzleGame.difficulty.medium'), points: 50 },
+    hard: { pairs: 8, cols: 4, label: t('games.puzzleGame.difficulty.hard'), points: 100 },
+  }), [t]);
+
   const config = difficultyConfig[difficulty];
-  const theme = puzzleThemes[currentTheme];
+  const theme = puzzleThemesBase[currentThemeIndex];
 
   const initializeGame = useCallback(() => {
     const emojis = theme.emojis.slice(0, config.pairs);
-    // Create pairs: each emoji appears twice
     const cardPairs: Card[] = [];
     emojis.forEach((emoji, index) => {
       cardPairs.push({ id: index * 2, emoji, pairId: index, isFlipped: false, isMatched: false });
       cardPairs.push({ id: index * 2 + 1, emoji, pairId: index, isFlipped: false, isMatched: false });
     });
 
-    // Shuffle cards using Fisher-Yates
     for (let i = cardPairs.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [cardPairs[i], cardPairs[j]] = [cardPairs[j], cardPairs[i]];
@@ -103,7 +103,6 @@ export default function PuzzleGame() {
       const secondCard = cards.find((c) => c.id === secondId);
 
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
-        // Match found!
         setTimeout(() => {
           setCards((prev) =>
             prev.map((card) =>
@@ -117,7 +116,6 @@ export default function PuzzleGame() {
           setIsChecking(false);
         }, 500);
       } else {
-        // No match — flip back after delay
         setTimeout(() => {
           setCards((prev) =>
             prev.map((card) =>
@@ -152,7 +150,7 @@ export default function PuzzleGame() {
       colors: ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181"],
     });
 
-    toast.success(`All pairs found! +${earnedPoints} points!`);
+    toast.success(t('games.puzzleGame.messages.allFound', { count: earnedPoints }));
 
     // Log game activity and check for badges
     try {
@@ -164,7 +162,7 @@ export default function PuzzleGame() {
       });
 
       if (response.newBadges && response.newBadges.length > 0) {
-        toast.success(`Huy hiệu mới: ${response.newBadges.join(', ')}`);
+        toast.success(t('games.puzzleGame.messages.newBadge', { badges: response.newBadges.join(', ') }));
         confetti({
           particleCount: 200,
           spread: 100,
@@ -183,13 +181,12 @@ export default function PuzzleGame() {
   };
 
   const handleCardClick = (cardId: number) => {
-    if (isChecking) return; // Wait for current check
-    if (flippedCards.length >= 2) return; // Already checking
+    if (isChecking) return; 
+    if (flippedCards.length >= 2) return; 
 
     const card = cards.find((c) => c.id === cardId);
-    if (!card || card.isFlipped || card.isMatched) return; // Already flipped or matched
+    if (!card || card.isFlipped || card.isMatched) return; 
 
-    // Flip the card
     setCards((prev) =>
       prev.map((c) => (c.id === cardId ? { ...c, isFlipped: true } : c))
     );
@@ -205,7 +202,7 @@ export default function PuzzleGame() {
   };
 
   const changeTheme = () => {
-    setCurrentTheme((prev) => (prev + 1) % puzzleThemes.length);
+    setCurrentThemeIndex((prev) => (prev + 1) % puzzleThemesBase.length);
     setGameStarted(false);
     setCards([]);
     setFlippedCards([]);
@@ -229,9 +226,9 @@ export default function PuzzleGame() {
             </Link>
             <div>
               <h1 className="text-3xl font-extrabold flex items-center gap-2">
-                Puzzle Fun <Puzzle className="w-8 h-8 text-primary" />
+                {t('games.puzzleGame.title')} <Puzzle className="w-8 h-8 text-primary" />
               </h1>
-              <p className="text-muted-foreground">Flip cards and find matching pairs!</p>
+              <p className="text-muted-foreground">{t('games.puzzleGame.subtitle')}</p>
             </div>
           </motion.div>
 
@@ -248,27 +245,27 @@ export default function PuzzleGame() {
                     <Trophy className="w-6 h-6 text-warning" />
                     <div>
                       <div className="text-2xl font-extrabold">{score}</div>
-                      <div className="text-xs text-muted-foreground">Points</div>
+                      <div className="text-xs text-muted-foreground">{t('games.puzzleGame.points')}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap className="w-6 h-6 text-primary" />
                     <div>
                       <div className="text-2xl font-extrabold">{moves}</div>
-                      <div className="text-xs text-muted-foreground">Moves</div>
+                      <div className="text-xs text-muted-foreground">{t('games.puzzleGame.moves')}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Eye className="w-6 h-6 text-secondary" />
                     <div>
                       <div className="text-2xl font-extrabold">{matchedPairs}/{config.pairs}</div>
-                      <div className="text-xs text-muted-foreground">Pairs</div>
+                      <div className="text-xs text-muted-foreground">{t('games.puzzleGame.pairs')}</div>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="bubble" size="sm" onClick={changeTheme} className="text-sm">
-                    {theme.name}
+                    {t(`games.puzzleGame.themes.${theme.id}`)}
                   </Button>
                 </div>
               </div>
@@ -303,7 +300,7 @@ export default function PuzzleGame() {
                 className="text-center mb-6"
               >
                 <Button variant="hero" size="xl" onClick={initializeGame}>
-                  Start Game! 
+                  {t('games.puzzleGame.startGame')} 
                 </Button>
               </motion.div>
             )}
@@ -350,7 +347,6 @@ export default function PuzzleGame() {
                           whileHover={!card.isFlipped && !card.isMatched ? { scale: 1.05 } : {}}
                           whileTap={!card.isFlipped && !card.isMatched ? { scale: 0.95 } : {}}
                         >
-                          {/* Card Back (face-down) */}
                           <div
                             className={`
                               absolute inset-0 rounded-2xl flex items-center justify-center text-3xl md:text-4xl
@@ -362,7 +358,6 @@ export default function PuzzleGame() {
                             <HelpCircle className="w-12 h-12 text-white/50" />
                           </div>
 
-                          {/* Card Front (face-up) */}
                           <div
                             className={`
                               absolute inset-0 rounded-2xl flex items-center justify-center text-4xl md:text-5xl
@@ -388,7 +383,7 @@ export default function PuzzleGame() {
                 <div className="flex justify-center mt-6 gap-4">
                   <Button variant="outline" onClick={initializeGame} className="rounded-full">
                     <RotateCcw className="w-4 h-4 mr-2" />
-                    New Game
+                    {t('games.puzzleGame.newGame')}
                   </Button>
                 </div>
               </motion.div>
@@ -402,14 +397,14 @@ export default function PuzzleGame() {
                 className="mt-6 bg-gradient-fun rounded-3xl p-8 text-center text-foreground shadow-glow"
               >
                 <PartyPopper className="w-16 h-16 text-primary mx-auto mb-4" />
-                <h2 className="text-2xl font-extrabold mb-2">Awesome Job!</h2>
-                <p className="text-lg opacity-90 mb-4">You found all pairs in {moves} moves!</p>
+                <h2 className="text-2xl font-extrabold mb-2">{t('games.puzzleGame.awesomeJob')}</h2>
+                <p className="text-lg opacity-90 mb-4">{t('games.puzzleGame.foundPairs', { count: moves })}</p>
                 <div className="flex justify-center gap-3">
                   <Button variant="secondary" onClick={initializeGame}>
-                    Play Again
+                    {t('games.common.playAgain')}
                   </Button>
                   <Button variant="outline" onClick={changeTheme}>
-                    Try New Theme
+                    {t('games.puzzleGame.tryNewTheme')}
                   </Button>
                 </div>
               </motion.div>
@@ -422,8 +417,8 @@ export default function PuzzleGame() {
               transition={{ delay: 0.3 }}
               className="mt-6 text-center text-muted-foreground"
             >
-              <p className="text-sm">💡 Flip two cards at a time. If they match, they stay open!</p>
-              <p className="text-sm mt-1">Find all matching pairs to win. Try to use fewer moves! </p>
+              <p className="text-sm">💡 {t('games.puzzleGame.instructions')}</p>
+              <p className="text-sm mt-1">{t('games.puzzleGame.instructions2')} </p>
             </motion.div>
           </div>
         </div>

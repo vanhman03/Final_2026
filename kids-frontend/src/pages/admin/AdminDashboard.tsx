@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Edit, Trash2, Play, Video, Search, Filter, Users, ShoppingBag,
@@ -30,11 +31,7 @@ const AGE_GROUPS = ['0-3', '3-6', '6-9', '9-12'];
 const VIDEO_CATEGORIES = ['Alphabet', 'Numbers', 'Animals', 'Music', 'Science', 'Art', 'Stories'];
 const PRODUCT_CATEGORIES = ['Toys', 'Books', 'Games', 'Stationery', 'Clothes', 'Electronics', 'Other'];
 
-const BADGE_OPTIONS = [
-  '🌟 Star Learner', '🎮 Game Master', '📚 Bookworm',
-  '🏆 Top Scorer', '🔥 Color Streak Master',
-  '🧩 Puzzle Pro', '🧠 Puzzle Zen Master', '🌈 Rainbow Achiever',
-];
+
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -57,11 +54,11 @@ function extractYouTubeId(url: string): string | null {
 
 // ─── Tabs Config ──────────────────────────────────────────────────────────────
 type TabId = 'videos' | 'products' | 'orders' | 'users';
-const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'videos', label: 'Videos', icon: Video, color: 'from-purple-500 to-indigo-500' },
-  { id: 'products', label: 'Products', icon: ShoppingBag, color: 'from-pink-500 to-rose-500' },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart, color: 'from-green-500 to-teal-500' },
-  { id: 'users', label: 'Users', icon: Users, color: 'from-orange-500 to-amber-500' },
+const TABS: { id: TabId; labelKey: string; icon: React.ElementType; color: string }[] = [
+  { id: 'videos', labelKey: 'admin.tabs.videos', icon: Video, color: 'from-purple-500 to-indigo-500' },
+  { id: 'products', labelKey: 'admin.tabs.products', icon: ShoppingBag, color: 'from-pink-500 to-rose-500' },
+  { id: 'orders', labelKey: 'admin.tabs.orders', icon: ShoppingCart, color: 'from-green-500 to-teal-500' },
+  { id: 'users', labelKey: 'admin.tabs.users', icon: Users, color: 'from-orange-500 to-amber-500' },
 ];
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -72,6 +69,7 @@ interface VideoItem {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('videos');
@@ -119,7 +117,7 @@ export default function AdminDashboard() {
     try {
       const { videos: data } = await videosApi.getVideos({ limit: 50 });
       setVideos(data || []);
-    } catch { toast({ title: 'Lỗi', description: 'Không thể tải danh sách video.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.videos.messages.loadFailed'), variant: 'destructive' }); }
     finally { setIsVideoLoading(false); }
   }, [toast]);
 
@@ -128,7 +126,7 @@ export default function AdminDashboard() {
     try {
       const { products: data } = await productsApi.getProducts({ limit: 50 });
       setProducts(data);
-    } catch { toast({ title: 'Lỗi', description: 'Không thể tải sản phẩm.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.products.messages.loadFailed'), variant: 'destructive' }); }
     finally { setIsProductLoading(false); }
   }, [toast]);
 
@@ -139,7 +137,7 @@ export default function AdminDashboard() {
       const status = orderStatusFilter === 'all' ? undefined : orderStatusFilter;
       const data = await adminApi.getAllOrders(1, 50, status);
       setOrders(data.orders);
-    } catch { toast({ title: 'Lỗi', description: 'Không thể tải đơn hàng.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.orders.messages.loadFailed'), variant: 'destructive' }); }
     finally { setIsOrderLoading(false); }
   }, [toast, orderStatusFilter]);
 
@@ -148,7 +146,7 @@ export default function AdminDashboard() {
     try {
       const data = await adminApi.getUsers(1, 50, userSearch || undefined);
       setUsers(data.users);
-    } catch { toast({ title: 'Lỗi', description: 'Không thể tải người dùng.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.users.messages.loadFailed'), variant: 'destructive' }); }
     finally { setIsUserLoading(false); }
   }, [toast, userSearch]);
 
@@ -162,7 +160,7 @@ export default function AdminDashboard() {
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const youtubeId = extractYouTubeId(videoForm.youtubeUrl);
-    if (!youtubeId) return toast({ title: 'URL không hợp lệ', description: 'Nhập YouTube URL hợp lệ.', variant: 'destructive' });
+    if (!youtubeId) return toast({ title: t('admin.videos.messages.invalidUrl'), description: t('admin.videos.messages.invalidUrlDesc'), variant: 'destructive' });
     const payload = {
       title: videoForm.title,
       youtube_video_id: youtubeId,
@@ -175,21 +173,21 @@ export default function AdminDashboard() {
     try {
       if (editingVideo) {
         await videosApi.updateVideo(editingVideo.id, payload);
-        toast({ title: 'Cập nhật thành công!' });
+        toast({ title: t('admin.videos.messages.updateSuccess') });
       } else {
         await videosApi.createVideo(payload);
-        toast({ title: 'Đã thêm video mới!' });
+        toast({ title: t('admin.videos.messages.saveSuccess') });
       }
       resetVideoForm(); fetchVideos();
-    } catch { toast({ title: 'Lỗi', description: 'Không thể lưu video.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.videos.messages.saveFailed'), variant: 'destructive' }); }
   };
 
   const handleVideoDelete = async (id: string) => {
-    if (!confirm('Xóa video này?')) return;
+    if (!confirm(t('admin.videos.delete'))) return;
     try {
       await videosApi.deleteVideo(id);
-      toast({ title: 'Đã xóa video' }); fetchVideos();
-    } catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
+      toast({ title: t('admin.videos.messages.deleteSuccess') }); fetchVideos();
+    } catch { toast({ title: t('admin.videos.messages.deleteFailed'), variant: 'destructive' }); }
   };
 
   const resetVideoForm = () => {
@@ -204,19 +202,19 @@ export default function AdminDashboard() {
     try {
       if (editingProduct) {
         await adminApi.updateProduct(editingProduct.id, payload);
-        toast({ title: 'Cập nhật thành công!' });
+        toast({ title: t('admin.products.messages.saveSuccess') });
       } else {
         await adminApi.createProduct(payload);
-        toast({ title: 'Đã thêm sản phẩm mới!' });
+        toast({ title: t('admin.products.messages.saveSuccess') });
       }
       resetProductForm(); fetchProducts();
-    } catch { toast({ title: 'Lỗi', description: 'Không thể lưu sản phẩm.', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), description: t('admin.products.messages.saveFailed'), variant: 'destructive' }); }
   };
 
   const handleProductDelete = async (id: string) => {
-    if (!confirm('Xóa sản phẩm này?')) return;
-    try { await adminApi.deleteProduct(id); toast({ title: 'Đã xóa sản phẩm' }); fetchProducts(); }
-    catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
+    if (!confirm(t('admin.products.delete'))) return;
+    try { await adminApi.deleteProduct(id); toast({ title: t('admin.products.messages.deleteSuccess') }); fetchProducts(); }
+    catch { toast({ title: t('common.error'), variant: 'destructive' }); }
   };
 
   const resetProductForm = () => {
@@ -232,13 +230,13 @@ export default function AdminDashboard() {
 
   const handleDeleteOrder = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng này? Thao tác này không thể hoàn tác.')) return;
+    if (!confirm(t('admin.orders.messages.deleteConfirm'))) return;
     try {
       await ordersApi.adminDeleteOrder(id);
-      toast({ title: 'Đã xóa đơn hàng thành công!' });
+      toast({ title: t('admin.orders.messages.deleteSuccess') });
       fetchOrders();
     } catch {
-      toast({ title: 'Lỗi', description: 'Không thể xóa đơn hàng.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('admin.orders.messages.deleteFailed') || 'Failed to delete order', variant: 'destructive' });
     }
   };
 
@@ -247,15 +245,16 @@ export default function AdminDashboard() {
     try {
       const newStatus = currentIsActive ? 'inactive' : 'active';
       await adminApi.updateUserStatus(id, newStatus);
-      toast({ title: `Đã chuyển sang ${newStatus === 'active' ? 'Hoạt động' : 'Tạm khóa'}!` });
+      const statusLabel = newStatus === 'active' ? t('admin.users.statusActive') : t('admin.users.statusInactive');
+      toast({ title: t('admin.users.messages.statusUpdated', { status: statusLabel }) });
       fetchUsers();
-    } catch { toast({ title: 'Lỗi khi cập nhật trạng thái', variant: 'destructive' }); }
+    } catch { toast({ title: t('common.error'), variant: 'destructive' }); }
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('Xóa người dùng này? Hành động không thể hoàn tác.')) return;
-    try { await adminApi.deleteUser(id); toast({ title: 'Đã xóa người dùng' }); fetchUsers(); }
-    catch { toast({ title: 'Lỗi khi xóa', variant: 'destructive' }); }
+    if (!confirm(t('admin.users.deleteConfirm'))) return;
+    try { await adminApi.deleteUser(id); toast({ title: t('admin.users.messages.deleteSuccess') }); fetchUsers(); }
+    catch { toast({ title: t('common.error'), variant: 'destructive' }); }
   };
 
   // ─── Filtered data ────────────────────────────────────────────────────────────
@@ -267,10 +266,10 @@ export default function AdminDashboard() {
   
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return 'Chờ xử lý';
-      case 'completed': return 'Hoàn thành';
-      case 'failed': return 'Thất bại';
-      case 'cancelled': return 'Đã hủy';
+      case 'pending': return t('admin.orders.pending');
+      case 'completed': return t('admin.orders.completed');
+      case 'failed': return t('admin.orders.failed');
+      case 'cancelled': return t('admin.orders.cancelled');
       default: return status;
     }
   };
@@ -282,8 +281,8 @@ export default function AdminDashboard() {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center p-8 bg-card rounded-3xl shadow-card border">
             <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Truy cập bị từ chối</h2>
-            <p className="text-muted-foreground">Chỉ quản trị viên mới có thể truy cập trang này.</p>
+            <h2 className="text-2xl font-bold mb-2">{t('admin.denied')}</h2>
+            <p className="text-muted-foreground">{t('admin.deniedDesc')}</p>
           </div>
         </div>
       </Layout>
@@ -303,9 +302,9 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <h1 className="text-4xl font-extrabold text-indigo-600">
-                  Trang Quản Trị
+                  {t('admin.dashboard')}
                 </h1>
-                <p className="text-muted-foreground">Quản lý nội dung, sản phẩm, đơn hàng và người dùng</p>
+                <p className="text-muted-foreground">{t('admin.subtitle')}</p>
               </div>
             </div>
           </motion.div>
@@ -313,10 +312,10 @@ export default function AdminDashboard() {
           {/* ── Stats Cards ──────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Video', value: stats?.totalVideos ?? '-', icon: Video, gradient: 'from-purple-400 to-purple-600' },
-              { label: 'Sản phẩm', value: stats?.totalProducts ?? '-', icon: ShoppingBag, gradient: 'from-pink-400 to-rose-600' },
-              { label: 'Đơn hàng', value: stats?.totalOrders ?? '-', icon: ShoppingCart, gradient: 'from-green-400 to-teal-600' },
-              { label: 'Người dùng', value: stats?.totalUsers ?? '-', icon: Users, gradient: 'from-orange-400 to-amber-600' },
+              { label: t('admin.stats.videos'), value: stats?.totalVideos ?? '-', icon: Video, gradient: 'from-purple-400 to-purple-600' },
+              { label: t('admin.stats.products'), value: stats?.totalProducts ?? '-', icon: ShoppingBag, gradient: 'from-pink-400 to-rose-600' },
+              { label: t('admin.stats.orders'), value: stats?.totalOrders ?? '-', icon: ShoppingCart, gradient: 'from-green-400 to-teal-600' },
+              { label: t('admin.stats.users'), value: stats?.totalUsers ?? '-', icon: Users, gradient: 'from-orange-400 to-amber-600' },
             ].map((stat, i) => (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                 className="bg-white rounded-2xl p-5 shadow-md border border-white/50 dark:bg-card">
@@ -338,7 +337,7 @@ export default function AdminDashboard() {
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm whitespace-nowrap transition-all duration-200 ${isActive ? `bg-gradient-to-r ${tab.color} text-white shadow-lg scale-105` : 'bg-white dark:bg-card text-muted-foreground hover:bg-muted border'}`}>
                   <Icon className="w-4 h-4" />
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </button>
               );
             })}
@@ -354,37 +353,37 @@ export default function AdminDashboard() {
                   <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="relative flex-1">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input placeholder="Tìm video..." value={videoSearch} onChange={e => setVideoSearch(e.target.value)} className="pl-12 rounded-2xl" />
+                      <Input placeholder={t('admin.videos.search')} value={videoSearch} onChange={e => setVideoSearch(e.target.value)} className="pl-12 rounded-2xl" />
                     </div>
                     <Select value={videoCategory} onValueChange={setVideoCategory}>
                       <SelectTrigger className="w-full sm:w-44 rounded-2xl"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="all">{t('games.categories.all')}</SelectItem>
                         {VIDEO_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
                       <DialogTrigger asChild>
                         <Button className="rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingVideo(null); setVideoForm({ title: '', youtubeUrl: '', ageGroup: '3-6', category: 'Alphabet', duration: '', thumbnailEmoji: 'video' }); }}>
-                          <Plus className="w-4 h-4" /> Thêm Video
+                          <Plus className="w-4 h-4" /> {t('admin.videos.add')}
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md rounded-3xl">
                         <DialogHeader><DialogTitle className="text-xl font-bold flex items-center gap-2">
                           {editingVideo ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                          {editingVideo ? 'Sửa Video' : 'Thêm Video Mới'}
+                          {editingVideo ? t('admin.videos.edit') : t('admin.videos.add')}
                         </DialogTitle></DialogHeader>
                         <form onSubmit={handleVideoSubmit} className="space-y-4 mt-2">
-                          <div><Label>Tiêu đề</Label><Input value={videoForm.title} onChange={e => setVideoForm(f => ({ ...f, title: e.target.value }))} placeholder="Nhập tiêu đề video" required className="mt-1 rounded-xl" /></div>
-                          <div><Label>YouTube URL</Label><Input value={videoForm.youtubeUrl} onChange={e => setVideoForm(f => ({ ...f, youtubeUrl: e.target.value }))} placeholder="https://youtube.com/watch?v=..." required className="mt-1 rounded-xl" /></div>
+                          <div><Label>{t('admin.videos.title')}</Label><Input value={videoForm.title} onChange={e => setVideoForm(f => ({ ...f, title: e.target.value }))} placeholder={t('admin.videos.title')} required className="mt-1 rounded-xl" /></div>
+                          <div><Label>{t('admin.videos.youtubeUrl')}</Label><Input value={videoForm.youtubeUrl} onChange={e => setVideoForm(f => ({ ...f, youtubeUrl: e.target.value }))} placeholder="https://youtube.com/watch?v=..." required className="mt-1 rounded-xl" /></div>
                           <div className="grid grid-cols-2 gap-3">
-                            <div><Label>Nhóm tuổi</Label>
+                            <div><Label>{t('admin.videos.ageGroup')}</Label>
                               <Select value={videoForm.ageGroup} onValueChange={v => setVideoForm(f => ({ ...f, ageGroup: v }))}>
                                 <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
-                                <SelectContent>{AGE_GROUPS.map(a => <SelectItem key={a} value={a}>{a} tuổi</SelectItem>)}</SelectContent>
+                                <SelectContent>{AGE_GROUPS.map(a => <SelectItem key={a} value={a}>{t('videos.agePrefix')} {a}</SelectItem>)}</SelectContent>
                               </Select>
                             </div>
-                            <div><Label>Danh mục</Label>
+                            <div><Label>{t('admin.videos.category')}</Label>
                               <Select value={videoForm.category} onValueChange={v => setVideoForm(f => ({ ...f, category: v }))}>
                                 <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
                                 <SelectContent>{VIDEO_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
@@ -392,10 +391,9 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                            <div><Label>Thời lượng</Label><Input value={videoForm.duration} onChange={e => setVideoForm(f => ({ ...f, duration: e.target.value }))} placeholder="3:45" required className="mt-1 rounded-xl" /></div>
-                            {/* Thumbnail Preview Area */}
+                            <div><Label>{t('admin.videos.duration')}</Label><Input value={videoForm.duration} onChange={e => setVideoForm(f => ({ ...f, duration: e.target.value }))} placeholder="3:45" required className="mt-1 rounded-xl" /></div>
                             <div className="col-span-2">
-                              <Label>Bản xem trước ảnh đại diện</Label>
+                              <Label>{t('admin.videos.preview')}</Label>
                               <div className="mt-1 aspect-video rounded-xl bg-muted overflow-hidden border flex items-center justify-center">
                                 {extractYouTubeId(videoForm.youtubeUrl) ? (
                                   <img 
@@ -404,14 +402,14 @@ export default function AdminDashboard() {
                                     alt="Preview"
                                   />
                                 ) : (
-                                  <div className="text-muted-foreground text-sm">Nhập link YouTube để xem trước</div>
+                                  <div className="text-muted-foreground text-sm">{t('admin.videos.previewPrompt')}</div>
                                 )}
                               </div>
                             </div>
                           </div>
                           <div className="flex gap-3 pt-2">
-                            <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetVideoForm}>Hủy</Button>
-                            <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white">{editingVideo ? 'Cập nhật' : 'Thêm'}</Button>
+                            <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetVideoForm}>{t('common.cancel')}</Button>
+                            <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white">{editingVideo ? t('admin.videos.update') : t('admin.videos.save')}</Button>
                           </div>
                         </form>
                       </DialogContent>
@@ -449,7 +447,7 @@ export default function AdminDashboard() {
                             <h3 className="font-bold truncate mb-2">{video.title}</h3>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium">{video.category}</span>
-                              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">{video.age_group} tuổi</span>
+                              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">{t('videos.agePrefix')} {video.age_group}</span>
                               <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">{video.duration}</span>
                             </div>
                           </div>
@@ -459,7 +457,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="text-center py-16">
                       <Video className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                      <p className="text-muted-foreground text-lg">Chưa có video nào</p>
+                      <p className="text-muted-foreground text-lg">{t('admin.videos.none')}</p>
                     </div>
                   )}
                 </div>
@@ -471,40 +469,40 @@ export default function AdminDashboard() {
                   <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="relative flex-1">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input placeholder="Tìm sản phẩm..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-12 rounded-2xl" />
+                      <Input placeholder={t('admin.products.search')} value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-12 rounded-2xl" />
                     </div>
                     <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
                       <DialogTrigger asChild>
                         <Button className="rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white gap-2 hover:opacity-90" onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', image_url: '', category: 'Toys', age_group: '', stock: 0 }); }}>
-                          <Plus className="w-4 h-4" /> Thêm Sản phẩm
+                          <Plus className="w-4 h-4" /> {t('admin.products.add')}
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-md rounded-3xl">
                         <DialogHeader><DialogTitle className="flex items-center gap-2">
                           {editingProduct ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                          {editingProduct ? 'Sửa Sản phẩm' : 'Thêm Sản phẩm Mới'}
+                          {editingProduct ? t('admin.products.edit') : t('admin.products.add')}
                         </DialogTitle></DialogHeader>
                         <form onSubmit={handleProductSubmit} className="space-y-4 mt-2">
-                          <div><Label>Tên sản phẩm</Label><Input value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required className="mt-1 rounded-xl" placeholder="Ví dụ: Đồ chơi xếp hình" /></div>
-                          <div><Label>Mô tả</Label><Input value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} className="mt-1 rounded-xl" placeholder="Mô tả sản phẩm..." /></div>
+                          <div><Label>{t('admin.products.name')}</Label><Input value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required className="mt-1 rounded-xl" placeholder={t('admin.products.namePlaceholder')} /></div>
+                          <div><Label>{t('admin.products.description')}</Label><Input value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} className="mt-1 rounded-xl" placeholder={t('admin.products.descriptionPlaceholder')} /></div>
                           <div className="grid grid-cols-2 gap-3">
-                            <div><Label>Giá (VND)</Label><Input type="number" min="0" value={productForm.price} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} required className="mt-1 rounded-xl" placeholder="50000" /></div>
-                            <div><Label>Nhóm tuổi</Label><Input value={productForm.age_group} onChange={e => setProductForm(f => ({ ...f, age_group: e.target.value }))} className="mt-1 rounded-xl" placeholder="3-6" /></div>
+                            <div><Label>{t('admin.products.price')}</Label><Input type="number" min="0" value={productForm.price} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} required className="mt-1 rounded-xl" placeholder="50000" /></div>
+                            <div><Label>{t('admin.products.ageGroup')}</Label><Input value={productForm.age_group} onChange={e => setProductForm(f => ({ ...f, age_group: e.target.value }))} className="mt-1 rounded-xl" placeholder="3-6" /></div>
                           </div>
-                          <div><Label>Danh mục</Label>
+                          <div><Label>{t('admin.products.category')}</Label>
                             <Select value={productForm.category} onValueChange={v => setProductForm(f => ({ ...f, category: v }))}>
                               <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
                               <SelectContent>{PRODUCT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
                           </div>
-                          <div><Label>URL Hình ảnh</Label><Input value={productForm.image_url} onChange={e => setProductForm(f => ({ ...f, image_url: e.target.value }))} className="mt-1 rounded-xl" placeholder="https://..." /></div>
+                          <div><Label>{t('admin.products.imageUrl')}</Label><Input value={productForm.image_url} onChange={e => setProductForm(f => ({ ...f, image_url: e.target.value }))} className="mt-1 rounded-xl" placeholder="https://..." /></div>
                           <div>
-                            <Label htmlFor="stock">Số lượng trong kho (Stock)</Label>
-                            <Input id="stock" type="number" min="0" value={productForm.stock} onChange={e => setProductForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} className="mt-1 rounded-xl" placeholder="Ví dụ: 100" />
+                            <Label htmlFor="stock">{t('admin.products.stock')}</Label>
+                            <Input id="stock" type="number" min="0" value={productForm.stock} onChange={e => setProductForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} className="mt-1 rounded-xl" placeholder="100" />
                           </div>
                           <div className="flex gap-3 pt-2">
-                            <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetProductForm}>Hủy</Button>
-                            <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white">{editingProduct ? 'Cập nhật' : 'Thêm'}</Button>
+                            <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={resetProductForm}>{t('common.cancel')}</Button>
+                            <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white">{editingProduct ? t('admin.products.update') : t('admin.products.save')}</Button>
                           </div>
                         </form>
                       </DialogContent>
@@ -523,16 +521,16 @@ export default function AdminDashboard() {
                             <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
                               <span className={`text-xs px-2 py-1 rounded-full font-semibold shadow-sm ${product.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                 {product.in_stock ? <CheckCircle2 className="w-3 h-3 inline mr-1" /> : <XCircle className="w-3 h-3 inline mr-1" />}
-                                {product.in_stock ? 'Còn hàng' : 'Hết hàng'}
+                                {product.in_stock ? t('admin.products.inStock') : t('admin.products.outOfStock')}
                               </span>
                               <span className="text-xs px-2 py-1 bg-white/90 text-slate-700 rounded-full font-semibold shadow-sm border">
-                                Kho: {product.stock ?? 0}
+                                {t('admin.products.stockLabel', { count: product.stock ?? 0 })}
                               </span>
                             </div>
                           </div>
                           <div className="p-4">
                             <h3 className="font-bold truncate mb-1">{product.name}</h3>
-                            <p className="text-sm text-muted-foreground truncate mb-3">{product.description || 'Không có mô tả'}</p>
+                            <p className="text-sm text-muted-foreground truncate mb-3">{product.description || t('shop.noDescription')}</p>
                             <div className="flex items-center justify-between">
                               <span className="text-lg font-extrabold text-pink-500">{product.price?.toLocaleString('vi-VN')}₫</span>
                               <div className="flex gap-2">
@@ -547,7 +545,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="text-center py-16">
                       <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                      <p className="text-muted-foreground text-lg">Chưa có sản phẩm nào</p>
+                      <p className="text-muted-foreground text-lg">{t('admin.products.none')}</p>
                     </div>
                   )}
                 </div>
@@ -561,7 +559,7 @@ export default function AdminDashboard() {
                       <button key={s} onClick={() => setOrderStatusFilter(s)}
                         className={`px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${orderStatusFilter === s ? 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow' : 'bg-white dark:bg-card border text-muted-foreground hover:bg-muted'}`}>
                         {s === 'all' ? <ShoppingCart className="w-4 h-4" /> : s === 'pending' ? <Clock className="w-4 h-4" /> : s === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : s === 'failed' ? <XCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
-                        {s === 'all' ? 'Tất cả' : s === 'pending' ? 'Chờ xử lý' : s === 'completed' ? 'Hoàn thành' : s === 'failed' ? 'Thất bại' : 'Đã hủy'}
+                        {s === 'all' ? t('admin.orders.all') : s === 'pending' ? t('admin.orders.pending') : s === 'completed' ? t('admin.orders.completed') : s === 'failed' ? t('admin.orders.failed') : t('admin.orders.cancelled')}
                       </button>
                     ))}
                   </div>
@@ -584,11 +582,11 @@ export default function AdminDashboard() {
                               <ShoppingCart className="w-6 h-6 text-slate-400" />
                             </div>
                             <div>
-                              <p className="font-bold text-sm font-mono text-muted-foreground">#{order.id.slice(0, 8)}...</p>
+                              <p className="font-bold text-sm font-mono text-muted-foreground">{t('admin.orders.orderId', { id: order.id.slice(0, 8) })}</p>
                               <p className="text-xl font-extrabold text-green-600">{parseFloat(String(order.total_amount)).toLocaleString('vi-VN')}₫</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                                  Khách: {order.user?.display_name || 'Khách vãng lai'}
+                                  {t('admin.orders.customer', { name: order.user?.display_name || t('admin.orders.unknownCustomer') })}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
                                   • {new Date(order.created_at).toLocaleString('vi-VN')}
@@ -598,12 +596,12 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${STATUS_COLORS[order.payment_status]}`}>
-                              {order.payment_status === 'pending' ? <><Clock className="w-3 h-3 inline mr-1" /> Chờ xử lý</> : order.payment_status === 'completed' ? <><CheckCircle2 className="w-3 h-3 inline mr-1" /> Hoàn thành</> : order.payment_status === 'failed' ? <><XCircle className="w-3 h-3 inline mr-1" /> Thất bại</> : <><Ban className="w-3 h-3 inline mr-1" /> Đã hủy</>}
+                              {getStatusLabel(order.payment_status)}
                             </span>
                             <button
                               onClick={(e) => handleDeleteOrder(order.id, e)}
                               className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
-                              title="Xóa đơn hàng"
+                              title={t('admin.orders.delete')}
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>
@@ -614,7 +612,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="text-center py-16">
                       <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                      <p className="text-muted-foreground text-lg">Không có đơn hàng nào</p>
+                      <p className="text-muted-foreground text-lg">{t('admin.orders.none')}</p>
                     </div>
                   )}
 
@@ -624,7 +622,7 @@ export default function AdminDashboard() {
                       <DialogHeader className="p-6 bg-gradient-to-r from-green-50 to-teal-50 border-b">
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-teal-700">
                           <Package className="w-6 h-6" />
-                          Chi tiết đơn hàng
+                          {t('admin.orders.details')}
                         </DialogTitle>
                       </DialogHeader>
                       
@@ -633,19 +631,19 @@ export default function AdminDashboard() {
                           {/* Order Summary Grid */}
                           <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
                             <div>
-                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Khách hàng</p>
-                              <p className="font-bold text-slate-800">{selectedOrder.user?.display_name || 'Khách vãng lai'}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">{t('common.user')}</p>
+                              <p className="font-bold text-slate-800">{selectedOrder.user?.display_name || t('admin.orders.unknownCustomer')}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Mã đơn</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">{t('admin.orders.orderIdLabel')}</p>
                               <p className="font-mono text-xs font-bold text-slate-600">#{selectedOrder.id.split('-')[0].toUpperCase()}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Thời gian</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">{t('common.time')}</p>
                               <p className="text-sm font-semibold">{new Date(selectedOrder.created_at).toLocaleString('vi-VN')}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Trạng thái</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">{t('common.status')}</p>
                               <Badge className={`${STATUS_COLORS[selectedOrder.payment_status]} shadow-none`}>
                                 {getStatusLabel(selectedOrder.payment_status)}
                               </Badge>
@@ -655,7 +653,7 @@ export default function AdminDashboard() {
                           {/* Items List */}
                           <div>
                             <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-700">
-                              <ShoppingCart className="w-4 h-4" /> Danh sách sản phẩm ({selectedOrder.order_items?.length || 0})
+                              <ShoppingCart className="w-4 h-4" /> {t('admin.orders.items', { count: selectedOrder.order_items?.length || 0 })}
                             </h3>
                             <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
                               {selectedOrder.order_items?.map((item) => (
@@ -670,8 +668,8 @@ export default function AdminDashboard() {
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-slate-800 truncate group-hover:text-teal-700 transition-colors">{item.product?.name || 'Sản phẩm đã xóa'}</p>
-                                    <p className="text-[11px] text-muted-foreground">Đơn giá: {item.price_at_purchase?.toLocaleString('vi-VN')}₫</p>
+                                    <p className="font-bold text-slate-800 truncate group-hover:text-teal-700 transition-colors">{item.product?.name || t('shop.productDeleted')}</p>
+                                    <p className="text-[11px] text-muted-foreground">{t('admin.orders.unitPrice', { price: item.price_at_purchase?.toLocaleString('vi-VN') })}</p>
                                   </div>
                                   <div className="text-right">
                                     <p className="text-xs font-bold text-teal-600">x{item.quantity}</p>
@@ -685,13 +683,13 @@ export default function AdminDashboard() {
                           {/* Footer Info */}
                           <div className="pt-6 border-t flex items-end justify-between">
                             <div className="space-y-1">
-                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Mã giao dịch VNPay</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{t('admin.orders.txnRef')}</p>
                               <p className="font-mono text-[11px] bg-slate-100 px-2 py-1 rounded text-slate-600 border border-slate-200">
-                                {selectedOrder.vnp_txn_ref || 'CHƯA CÓ MÃ'}
+                                {selectedOrder.vnp_txn_ref || t('admin.orders.noTxn')}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs font-bold text-muted-foreground mb-1">TỔNG THANH TOÁN</p>
+                              <p className="text-xs font-bold text-muted-foreground mb-1">{t('admin.orders.totalAmount')}</p>
                               <p className="text-3xl font-black text-teal-600 tracking-tight">
                                 {selectedOrder.total_amount?.toLocaleString('vi-VN')}₫
                               </p>
@@ -702,7 +700,7 @@ export default function AdminDashboard() {
                             className="w-full rounded-2xl py-6 text-base font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200 transition-all hover:scale-[1.02] active:scale-[0.98]" 
                             onClick={() => setIsOrderDetailOpen(false)}
                           >
-                            Đóng cửa sổ
+                            {t('common.close')}
                           </Button>
                         </div>
                       )}
@@ -717,7 +715,7 @@ export default function AdminDashboard() {
                   <div className="flex gap-4 mb-6">
                     <div className="relative flex-1">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input placeholder="Tìm người dùng..." value={userSearch} onChange={e => setUserSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchUsers()} className="pl-12 rounded-2xl" />
+                      <Input placeholder={t('admin.users.search')} value={userSearch} onChange={e => setUserSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchUsers()} className="pl-12 rounded-2xl" />
                     </div>
                     <Button className="rounded-2xl bg-gradient-to-r from-orange-400 to-amber-500 text-white" onClick={fetchUsers}>
                       <Search className="w-4 h-4" />
@@ -739,9 +737,9 @@ export default function AdminDashboard() {
                               </div>
                               <div>
                                 <p className="font-bold flex items-center gap-2">
-                                  {u.display_name || 'Chưa đặt tên'}
+                                  {u.display_name || t('auth.unknownUser')}
                                   <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                    {isActive ? 'Active' : 'Inactive'}
+                                    {isActive ? t('admin.users.active') : t('admin.users.inactive')}
                                   </span>
                                 </p>
                                 <p className="text-xs text-muted-foreground font-mono">{u.email || u.user_id?.slice(0, 12)}</p>
@@ -749,7 +747,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex items-center gap-3">
                               <label className="flex items-center cursor-pointer gap-2">
-                                <span className="text-sm font-semibold text-muted-foreground">{isActive ? 'Kích hoạt' : 'Vô hiệu'}</span>
+                                <span className="text-sm font-semibold text-muted-foreground">{isActive ? t('admin.users.toggleActive') : t('admin.users.toggleInactive')}</span>
                                 <div className="relative">
                                   <input type="checkbox" className="sr-only" checked={isActive} onChange={() => handleUserStatusToggle(u.id, isActive)} />
                                   <div className={`block w-10 h-6 rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
@@ -767,7 +765,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="text-center py-16">
                       <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                      <p className="text-muted-foreground text-lg">Không tìm thấy người dùng nào</p>
+                      <p className="text-muted-foreground text-lg">{t('admin.users.none')}</p>
                     </div>
                   )}
                 </div>

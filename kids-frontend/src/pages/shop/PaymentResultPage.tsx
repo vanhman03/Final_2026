@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 export default function PaymentResultPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -32,13 +34,13 @@ export default function PaymentResultPage() {
               >
                 <CheckCircle className="w-14 h-14 text-green-500" />
               </motion.div>
-              <h1 className="text-3xl font-extrabold text-green-600 mb-2">Payment Successful!</h1>
+              <h1 className="text-3xl font-extrabold text-green-600 mb-2">{t('shop.result.success')}</h1>
               <p className="text-muted-foreground mb-2">
-                Your order has been confirmed and is being processed.
+                {t('shop.result.successDesc')}
               </p>
               {orderId && (
                 <p className="text-sm text-muted-foreground mb-6">
-                  Order ID: <span className="font-mono font-semibold">{orderId.slice(0, 8).toUpperCase()}</span>
+                  {t('shop.result.orderId', { id: orderId.slice(0, 8).toUpperCase() })}
                 </p>
               )}
               <div className="flex justify-center mb-6">
@@ -57,9 +59,9 @@ export default function PaymentResultPage() {
               >
                 <XCircle className="w-14 h-14 text-red-500" />
               </motion.div>
-              <h1 className="text-3xl font-extrabold text-red-600 mb-2">Payment Failed</h1>
+              <h1 className="text-3xl font-extrabold text-red-600 mb-2">{t('shop.result.failed')}</h1>
               <p className="text-muted-foreground mb-6">
-                Your payment could not be processed. Please try again or contact support.
+                {t('shop.result.failedDesc')}
               </p>
               <div className="flex justify-center mb-6">
                 <AlertCircle className="w-8 h-8 text-red-400" />
@@ -77,19 +79,19 @@ export default function PaymentResultPage() {
               >
                 <AlertCircle className="w-14 h-14 text-yellow-500" />
               </motion.div>
-              <h1 className="text-3xl font-extrabold mb-2">Unknown Result</h1>
+              <h1 className="text-3xl font-extrabold mb-2">{t('shop.result.unknown')}</h1>
               <p className="text-muted-foreground mb-6">
-                We couldn't confirm your payment status. Check your orders for details.
+                {t('shop.result.unknownDesc')}
               </p>
             </>
           )}
 
           <div className="flex flex-col gap-3">
             <Button variant="hero" size="lg" onClick={() => navigate('/shop')}>
-              Back to Shop
+              {t('shop.result.backToShop')}
             </Button>
             <Button variant="outline" onClick={() => navigate('/home')}>
-              Go to Home
+              {t('shop.result.goHome')}
             </Button>
           </div>
         </motion.div>

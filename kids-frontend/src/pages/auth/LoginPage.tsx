@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FloatingElements } from '@/components/FloatingElements';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,8 +37,8 @@ export default function LoginPage() {
     
     if (!email || !password) {
       toast({
-        title: 'Missing fields',
-        description: 'Please fill in all fields.',
+        title: t('auth.messages.missingFields'),
+        description: t('auth.messages.fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -47,14 +49,14 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast({
-        title: 'Welcome back!',
-        description: 'You have successfully logged in.',
+        title: t('auth.messages.loginSuccess'),
+        description: t('auth.messages.loginSuccess'), // Alternatively use different description if available
       });
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
-        title: 'Login failed',
-        description: error.message || 'Please check your credentials and try again.',
+        title: t('auth.messages.loginFailed'),
+        description: error.message || t('auth.messages.loginFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -94,19 +96,19 @@ export default function LoginPage() {
           className="bg-card rounded-3xl shadow-card p-8 border border-border"
         >
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold mb-2">Welcome Back!</h1>
-            <p className="text-muted-foreground">Sign in to continue your learning adventure</p>
+            <h1 className="text-2xl font-extrabold mb-2">{t('auth.loginTitle')}</h1>
+            <p className="text-muted-foreground">{t('auth.loginSubtitle')}</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -115,13 +117,13 @@ export default function LoginPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-12 pr-12 h-12 rounded-xl"
@@ -146,12 +148,12 @@ export default function LoginPage() {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Signing in...
+                  {t('auth.signingIn')}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <LogIn className="w-5 h-5" />
-                  Sign In
+                  {t('auth.signIn')}
                 </span>
               )}
             </Button>
@@ -159,9 +161,9 @@ export default function LoginPage() {
           
           {/* Register link */}
           <p className="text-center mt-8 text-muted-foreground">
-            Don't have an account?{' '}
+            {t('auth.dontHaveAccount')}{' '}
             <Link to="/register" className="text-primary font-semibold hover:underline">
-              Sign up free
+              {t('auth.signUpFree')}
             </Link>
           </p>
         </motion.div>

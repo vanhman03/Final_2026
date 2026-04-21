@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FloatingElements } from '@/components/FloatingElements';
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,8 +42,8 @@ export default function RegisterPage() {
     
     if (!name || !email || !password || !confirmPassword || !pin || !confirmPin) {
       toast({
-        title: 'Missing fields',
-        description: 'Please fill in all fields.',
+        title: t('auth.messages.missingFields'),
+        description: t('auth.messages.fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -49,8 +51,8 @@ export default function RegisterPage() {
     
     if (password !== confirmPassword) {
       toast({
-        title: 'Passwords don\'t match',
-        description: 'Please make sure your passwords match.',
+        title: t('auth.messages.passwordsMismatch'),
+        description: t('auth.messages.passwordsMismatchDesc'),
         variant: 'destructive',
       });
       return;
@@ -58,8 +60,8 @@ export default function RegisterPage() {
     
     if (password.length < 6) {
       toast({
-        title: 'Password too short',
-        description: 'Password must be at least 6 characters.',
+        title: t('auth.messages.passwordTooShort'),
+        description: t('auth.messages.passwordTooShortDesc'),
         variant: 'destructive',
       });
       return;
@@ -67,8 +69,8 @@ export default function RegisterPage() {
 
     if (pin.length < 4 || pin.length > 6) {
       toast({
-        title: 'Invalid PIN',
-        description: 'PIN must be 4-6 digits.',
+        title: t('auth.messages.invalidPin'),
+        description: t('auth.messages.invalidPinDesc'),
         variant: 'destructive',
       });
       return;
@@ -76,8 +78,8 @@ export default function RegisterPage() {
 
     if (pin !== confirmPin) {
       toast({
-        title: 'PINs don\'t match',
-        description: 'Please make sure your PINs match.',
+        title: t('auth.messages.pinsMismatch'),
+        description: t('auth.messages.pinsMismatchDesc'),
         variant: 'destructive',
       });
       return;
@@ -88,19 +90,19 @@ export default function RegisterPage() {
     try {
       await register(email, password, name, pin);
       toast({
-        title: 'Account created!',
-        description: 'Welcome to EduKids! Let\'s start learning.',
+        title: t('auth.messages.registerSuccess'),
+        description: t('auth.messages.registerSuccess'),
       });
     } catch (error: any) {
       console.error('Registration error:', error);
-      let errorMessage = 'Something went wrong. Please try again.';
+      let errorMessage = t('auth.messages.registerFailed');
       
       if (error.message?.includes('already registered')) {
-        errorMessage = 'This email is already registered. Please sign in instead.';
+        errorMessage = t('auth.messages.registerFailed'); // or a specific "email taken" key if added
       }
       
       toast({
-        title: 'Registration failed',
+        title: t('auth.messages.registerFailed'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -142,18 +144,18 @@ export default function RegisterPage() {
         >
           <div className="text-center mb-6">
             <h1 className="text-3xl font-extrabold text-primary">EduKids</h1>
-            <p className="text-muted-foreground">Create your parent account</p>
+            <p className="text-muted-foreground">{t('auth.registerSubtitle')}</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t('auth.name')}</Label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Enter your name"
+                  placeholder={t('auth.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -162,13 +164,13 @@ export default function RegisterPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -177,13 +179,13 @@ export default function RegisterPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-12 pr-12 h-12 rounded-xl"
@@ -199,13 +201,13 @@ export default function RegisterPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -216,17 +218,17 @@ export default function RegisterPage() {
             {/* PIN Section */}
             <div className="pt-4 border-t border-border">
               <p className="text-sm text-muted-foreground mb-4">
-                Create a 4-6 digit PIN to protect sensitive features like Parent Mode and checkout.
+                {t('auth.pinNotice')}
               </p>
               
               <div className="space-y-2">
-                <Label htmlFor="pin">Security PIN</Label>
+                <Label htmlFor="pin">{t('auth.securityPin')}</Label>
                 <div className="relative">
                   <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="pin"
                     type={showPin ? 'text' : 'password'}
-                    placeholder="Create a PIN (4-6 digits)"
+                    placeholder={t('auth.pinPlaceholder')}
                     value={pin}
                     onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     className="pl-12 pr-12 h-12 rounded-xl"
@@ -243,13 +245,13 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2 mt-3">
-                <Label htmlFor="confirmPin">Confirm PIN</Label>
+                <Label htmlFor="confirmPin">{t('auth.confirmPin')}</Label>
                 <div className="relative">
                   <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="confirmPin"
                     type={showPin ? 'text' : 'password'}
-                    placeholder="Confirm your PIN"
+                    placeholder={t('auth.confirmPinPlaceholder')}
                     value={confirmPin}
                     onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     className="pl-12 h-12 rounded-xl"
@@ -269,12 +271,12 @@ export default function RegisterPage() {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Creating account...
+                  {t('auth.messages.creatingAccount')}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <UserPlus className="w-5 h-5" />
-                  Create Account
+                  {t('auth.signUp')}
                 </span>
               )}
             </Button>
@@ -282,9 +284,9 @@ export default function RegisterPage() {
           
           {/* Login link */}
           <p className="text-center mt-6 text-muted-foreground">
-            Already have an account?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link to="/login" className="text-primary font-semibold hover:underline">
-              Sign in
+              {t('auth.signIn')}
             </Link>
           </p>
         </motion.div>

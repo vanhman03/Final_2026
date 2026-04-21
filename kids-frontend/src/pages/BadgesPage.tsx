@@ -6,25 +6,26 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { profilesApi } from '@/services/profilesApi';
-
-// ─── Badge definitions (all possible badges in the system) ───────────────────
-const ALL_BADGES = [
-    { id: '🌟 Star Learner', label: 'Star Learner', icon: Star, desc: 'Đạt 500 điểm trở lên', color: 'from-yellow-400 to-orange-400' },
-    { id: '🎮 Game Master', label: 'Game Master', icon: Gamepad2, desc: 'Tổng trò chơi đã chơi đạt 10 lần', color: 'from-purple-400 to-indigo-500' },
-    { id: '📚 Bookworm', label: 'Bookworm', icon: Book, desc: 'Tổng video đã xem đạt 10 lần', color: 'from-blue-400 to-cyan-400' },
-    { id: '🏆 Top Scorer', label: 'Top Scorer', icon: Trophy, desc: 'Đạt điểm trên 100', color: 'from-amber-400 to-yellow-500' },
-    { id: '🔥 Color Streak Master', label: 'Color Streak Master', icon: Flame, desc: '8 chuỗi thắng liên tiếp trong Color Match!', color: 'from-orange-500 to-red-600' },
-    { id: '🧩 Puzzle Pro', label: 'Puzzle Pro', icon: Puzzle, desc: 'Hoàn thành Puzzle mức độ Trung bình!', color: 'from-blue-500 to-indigo-600' },
-    { id: '🧠 Puzzle Zen Master', label: 'Puzzle Zen Master', icon: Brain, desc: 'Hoàn thành Puzzle mức độ Khó!', color: 'from-purple-600 to-pink-600' },
-    { id: '🌈 Rainbow Achiever', label: 'Rainbow Achiever', icon: Sparkles, desc: 'Hoàn thành mọi thử thách!', color: 'from-violet-400 to-pink-500' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function BadgesPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [userBadges, setUserBadges] = useState<string[]>([]);
     const [points, setPoints] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+
+    const ALL_BADGES = [
+        { id: '🌟 Star Learner', label: t('badges.items.starLearner.label'), icon: Star, desc: t('badges.items.starLearner.desc'), color: 'from-yellow-400 to-orange-400' },
+        { id: '🎮 Game Master', label: t('badges.items.gameMaster.label'), icon: Gamepad2, desc: t('badges.items.gameMaster.desc'), color: 'from-purple-400 to-indigo-500' },
+        { id: '📚 Bookworm', label: t('badges.items.bookworm.label'), icon: Book, desc: t('badges.items.bookworm.desc'), color: 'from-blue-400 to-cyan-400' },
+        { id: '🏆 Top Scorer', label: t('badges.items.topScorer.label'), icon: Trophy, desc: t('badges.items.topScorer.desc'), color: 'from-amber-400 to-yellow-500' },
+        { id: '🔥 Color Streak Master', label: t('badges.items.streakMaster.label'), icon: Flame, desc: t('badges.items.streakMaster.desc'), color: 'from-orange-500 to-red-600' },
+        { id: '🧩 Puzzle Pro', label: t('badges.items.puzzlePro.label'), icon: Puzzle, desc: t('badges.items.puzzlePro.desc'), color: 'from-blue-500 to-indigo-600' },
+        { id: '🧠 Puzzle Zen Master', label: t('badges.items.puzzleZen.label'), icon: Brain, desc: t('badges.items.puzzleZen.desc'), color: 'from-purple-600 to-pink-600' },
+        { id: '🌈 Rainbow Achiever', label: t('badges.items.rainbowAchiever.label'), icon: Sparkles, desc: t('badges.items.rainbowAchiever.desc'), color: 'from-violet-400 to-pink-500' },
+    ];
 
     useEffect(() => {
         if (!user) { navigate('/login'); return; }
@@ -63,9 +64,9 @@ export default function BadgesPage() {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl md:text-4xl font-extrabold text-amber-600">
-                                        Huy Hiệu Của Bé
+                                        {t('badges.title')}
                                     </h1>
-                                    <p className="text-muted-foreground">Sưu tập thành tích của bạn!</p>
+                                    <p className="text-muted-foreground">{t('badges.subtitle')}</p>
                                 </div>
                             </div>
                         </div>
@@ -75,17 +76,17 @@ export default function BadgesPage() {
                             <div className="bg-white dark:bg-card rounded-2xl p-4 text-center shadow-md border">
                                 <div className="flex justify-center mb-1 text-yellow-500"><Star className="w-8 h-8" /></div>
                                 <p className="text-2xl font-extrabold text-yellow-500">{points}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Điểm thưởng</p>
+                                <p className="text-xs text-muted-foreground font-medium">{t('badges.stats.points')}</p>
                             </div>
                             <div className="bg-white dark:bg-card rounded-2xl p-4 text-center shadow-md border">
                                 <div className="flex justify-center mb-1 text-orange-500"><Trophy className="w-8 h-8" /></div>
                                 <p className="text-2xl font-extrabold text-orange-500">{earnedBadges.length}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Huy hiệu có</p>
+                                <p className="text-xs text-muted-foreground font-medium">{t('badges.stats.owned')}</p>
                             </div>
                             <div className="bg-white dark:bg-card rounded-2xl p-4 text-center shadow-md border">
                                 <div className="flex justify-center mb-1 text-purple-500"><Target className="w-8 h-8" /></div>
                                 <p className="text-2xl font-extrabold text-purple-500">{lockedBadges.length}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Chưa mở khóa</p>
+                                <p className="text-xs text-muted-foreground font-medium">{t('badges.stats.locked')}</p>
                             </div>
                         </div>
                     </motion.div>
@@ -100,7 +101,7 @@ export default function BadgesPage() {
                             {earnedBadges.length > 0 && (
                                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                        <Trophy className="w-5 h-5 text-yellow-500" /> Huy hiệu đã đạt được <PartyPopper className="w-5 h-5 inline text-primary" />
+                                        <Trophy className="w-5 h-5 text-yellow-500" /> {t('badges.earnedTitle')} <PartyPopper className="w-5 h-5 inline text-primary" />
                                     </h2>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         {earnedBadges.map((badge, idx) => (
@@ -127,7 +128,7 @@ export default function BadgesPage() {
                             {lockedBadges.length > 0 && (
                                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-muted-foreground">
-                                        <Lock className="w-5 h-5" /> Chưa mở khóa ({lockedBadges.length})
+                                        <Lock className="w-5 h-5" /> {t('badges.lockedTitle', { count: lockedBadges.length })}
                                     </h2>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         {lockedBadges.map((badge, idx) => (
@@ -151,8 +152,8 @@ export default function BadgesPage() {
                             {earnedBadges.length === 0 && (
                                 <div className="text-center py-12">
                                     <Leaf className="w-16 h-16 mx-auto mb-4 text-green-500" />
-                                    <h3 className="text-xl font-bold mb-2">Chưa có huy hiệu nào!</h3>
-                                    <p className="text-muted-foreground">Tiếp tục học và chơi game để nhận huy hiệu nhé!</p>
+                                    <h3 className="text-xl font-bold mb-2">{t('badges.noBadges')}</h3>
+                                    <p className="text-muted-foreground">{t('badges.prompt')}</p>
                                 </div>
                             )}
                         </>

@@ -5,57 +5,60 @@ import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
 import { FloatingElements } from '@/components/FloatingElements';
 import heroImage from '@/assets/hero-kids.png';
-
-const features = [
-  {
-    icon: Play,
-    title: 'Safe Videos',
-    description: 'Curated YouTube content filtered for children, no ads or distractions.',
-    color: 'bg-primary',
-  },
-  {
-    icon: Gamepad2,
-    title: 'Fun Games',
-    description: 'Educational mini-games that make learning exciting and rewarding.',
-    color: 'bg-secondary',
-  },
-  {
-    icon: Shield,
-    title: 'Parental Control',
-    description: 'Full control over content access and screen time limits.',
-    color: 'bg-success',
-  },
-  {
-    icon: Star,
-    title: 'Rewards System',
-    description: 'Points and badges that motivate kids to learn more.',
-    color: 'bg-accent',
-  },
-];
-
-const stats = [
-  { value: '500+', label: 'Educational Videos' },
-  { value: '20+', label: 'Fun Games' },
-  { value: '10K+', label: 'Happy Families' },
-  { value: '99%', label: 'Parents Trust Us' },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+import { useTranslation } from 'react-i18next';
 
 export default function LandingPage() {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: Play,
+      title: t('landing.features.safeVideos.title'),
+      description: t('landing.features.safeVideos.desc'),
+      color: 'bg-primary',
+    },
+    {
+      icon: Gamepad2,
+      title: t('landing.features.funGames.title'),
+      description: t('landing.features.funGames.desc'),
+      color: 'bg-secondary',
+    },
+    {
+      icon: Shield,
+      title: t('landing.features.parentalControl.title'),
+      description: t('landing.features.parentalControl.desc'),
+      color: 'bg-success',
+    },
+    {
+      icon: Star,
+      title: t('landing.features.rewards.title'),
+      description: t('landing.features.rewards.desc'),
+      color: 'bg-accent',
+    },
+  ];
+
+  const stats = [
+    { value: '500+', label: t('landing.stats.videos') },
+    { value: '20+', label: t('landing.stats.games') },
+    { value: '10K+', label: t('landing.stats.families') },
+    { value: '99%', label: t('landing.stats.trust') },
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
     <Layout>
       <FloatingElements />
@@ -81,29 +84,29 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold mb-6"
               >
                 <Star className="w-4 h-4" />
-                <span>Learning Made Fun!</span>
+                <span>{t('landing.heroBadge')}</span>
               </motion.div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                Where Kids{' '}
+                {t('landing.heroTitle').split('Learn & Play')[0]}
                 <span className="text-primary">Learn & Play</span>
-                {' '}Safely
+                {t('landing.heroTitle').split('Learn & Play')[1]}
               </h1>
               
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
-                A magical world of educational videos, fun games, and rewarding experiences designed for children aged 3-12.
+                {t('landing.heroSubtitle')}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/register">
                   <Button variant="hero" size="xl" className="gap-2 w-full sm:w-auto">
-                    Start Learning Free
+                    {t('landing.startFree')}
                     <ChevronRight className="w-5 h-5" />
                   </Button>
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="xl" className="w-full sm:w-auto">
-                    Parent Login
+                    {t('landing.parentLogin')}
                   </Button>
                 </Link>
               </div>
@@ -117,15 +120,15 @@ export default function LandingPage() {
               >
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Shield className="w-5 h-5 text-success" />
-                  <span className="text-sm font-medium">100% Safe</span>
+                  <span className="text-sm font-medium">{t('landing.safeBadge')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Users className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">Family Friendly</span>
+                  <span className="text-sm font-medium">{t('landing.familyBadge')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-5 h-5 text-secondary" />
-                  <span className="text-sm font-medium">Screen Time Control</span>
+                  <span className="text-sm font-medium">{t('landing.screenTimeBadge')}</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -158,8 +161,8 @@ export default function LandingPage() {
                     <Trophy className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold">450 Points</p>
-                    <p className="text-sm text-muted-foreground">Keep Learning!</p>
+                    <p className="font-bold">450 {t('common.points')}</p>
+                    <p className="text-sm text-muted-foreground">{t('landing.pointsNotice')}</p>
                   </div>
                 </div>
               </motion.div>
@@ -175,8 +178,8 @@ export default function LandingPage() {
                     <Gamepad2 className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold">5 Games</p>
-                    <p className="text-sm text-muted-foreground">Completed Today</p>
+                    <p className="font-bold">5 {t('common.games')}</p>
+                    <p className="text-sm text-muted-foreground">{t('landing.gamesNotice')}</p>
                   </div>
                 </div>
               </motion.div>
@@ -221,11 +224,12 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-              Everything Kids Need to{' '}
+              {t('landing.features.title').split('Learn & Grow')[0]}
               <span className="text-secondary">Learn & Grow</span>
+              {t('landing.features.title').split('Learn & Grow')[1]}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A complete educational platform designed with love for children and peace of mind for parents.
+              {t('landing.features.subtitle')}
             </p>
           </motion.div>
           
@@ -264,14 +268,14 @@ export default function LandingPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-4xl font-extrabold text-primary-foreground mb-4">
-              Ready to Start the Learning Adventure?
+              {t('landing.cta.title')}
             </h2>
             <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              Join thousands of families who trust EduKids for their children's education.
+              {t('landing.cta.subtitle')}
             </p>
             <Link to="/register">
               <Button variant="bubble" size="xl" className="shadow-lg hover:shadow-xl">
-                Create Free Account
+                {t('landing.cta.button')}
                 <ChevronRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -288,14 +292,14 @@ export default function LandingPage() {
               <span className="font-extrabold text-2xl text-primary">EduKids</span>
             </div>
             <p className="text-muted-foreground text-center flex items-center gap-1 justify-center">
-              © 2024 EduKids. Made with <Heart className="w-4 h-4 text-rose-500 fill-current" /> for children everywhere.
+              © 2026 EduKids. {t('landing.footer.madeWith').split('for children')[0]} <Heart className="w-4 h-4 text-rose-500 fill-current" /> {t('landing.footer.madeWith').split('for children')[1]}
             </p>
             <div className="flex items-center gap-4">
               <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
-                Login
+                {t('common.login')}
               </Link>
               <Link to="/register" className="text-muted-foreground hover:text-foreground transition-colors">
-                Register
+                {t('common.register')}
               </Link>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Star, Lock, Gamepad2, BarChart3, Palette, Puzzle, Binary, PenTool, Luci
 import { Layout } from '@/components/layout/Layout';
 import { gamesApi } from '@/services';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface Game {
   id: string;
@@ -19,72 +20,60 @@ interface Game {
   gameType: string;
 }
 
-const games: Game[] = [
-  {
-    id: '1',
-    title: 'Color Match',
-    description: 'Match the colors and earn points!',
-    icon: Palette,
-    color: 'bg-secondary/20',
-    difficulty: 'Easy',
-    points: 50,
-    isLocked: false,
-    href: '/games/color-match',
-    gameType: 'color-match',
-  },
-  {
-    id: '2',
-    title: 'Puzzle Fun',
-    description: 'Solve puzzles to unlock surprises!',
-    icon: Puzzle,
-    color: 'bg-primary/20',
-    difficulty: 'Medium',
-    points: 100,
-    isLocked: false,
-    href: '/games/puzzle',
-    gameType: 'puzzle',
-  },
-  {
-    id: '3',
-    title: 'Number Quest',
-    description: 'Learn numbers in a fun way!',
-    icon: Binary,
-    color: 'bg-success/20',
-    difficulty: 'Easy',
-    points: 50,
-    isLocked: true,
-    href: '#',
-    gameType: 'number-quest',
-  },
-  {
-    id: '4',
-    title: 'Word Builder',
-    description: 'Build words and expand vocabulary!',
-    icon: PenTool,
-    color: 'bg-warning/20',
-    difficulty: 'Hard',
-    points: 150,
-    isLocked: true,
-    href: '#',
-    gameType: 'word-builder',
-  },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0 },
-};
-
 export default function GamesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+
+  const games: Game[] = [
+    {
+      id: '1',
+      title: t('games.items.colorMatch.title'),
+      description: t('games.items.colorMatch.desc'),
+      icon: Palette,
+      color: 'bg-secondary/20',
+      difficulty: 'Easy',
+      points: 50,
+      isLocked: false,
+      href: '/games/color-match',
+      gameType: 'color-match',
+    },
+    {
+      id: '2',
+      title: t('games.items.puzzleFun.title'),
+      description: t('games.items.puzzleFun.desc'),
+      icon: Puzzle,
+      color: 'bg-primary/20',
+      difficulty: 'Medium',
+      points: 100,
+      isLocked: false,
+      href: '/games/puzzle',
+      gameType: 'puzzle',
+    },
+    {
+      id: '3',
+      title: t('games.items.numberQuest.title'),
+      description: t('games.items.numberQuest.desc'),
+      icon: Binary,
+      color: 'bg-success/20',
+      difficulty: 'Easy',
+      points: 50,
+      isLocked: true,
+      href: '#',
+      gameType: 'number-quest',
+    },
+    {
+      id: '4',
+      title: t('games.items.wordBuilder.title'),
+      description: t('games.items.wordBuilder.desc'),
+      icon: PenTool,
+      color: 'bg-warning/20',
+      difficulty: 'Hard',
+      points: 150,
+      isLocked: true,
+      href: '#',
+      gameType: 'word-builder',
+    },
+  ];
 
   // Fetch game stats from API
   const { data: statsData } = useQuery({
@@ -116,9 +105,9 @@ export default function GamesPage() {
               <Gamepad2 className="w-16 h-16" />
             </motion.div>
             <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-primary">
-              Fun <span className="text-secondary">Games</span>
+              {t('games.title')}
             </h1>
-            <p className="text-muted-foreground text-lg">Choose a game and start learning!</p>
+            <p className="text-muted-foreground text-lg">{t('games.subtitle')}</p>
           </motion.div>
 
           {/* Games Grid */}
@@ -141,7 +130,7 @@ export default function GamesPage() {
                     <div className="absolute inset-0 bg-foreground/10 backdrop-blur-[2px] rounded-3xl flex items-center justify-center">
                       <div className="bg-card/90 px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg">
                         <Lock className="w-5 h-5 text-muted-foreground" />
-                        <span className="font-bold text-muted-foreground">Coming Soon!</span>
+                        <span className="font-bold text-muted-foreground">{t('games.comingSoon')}</span>
                       </div>
                     </div>
                   </div>
@@ -164,20 +153,20 @@ export default function GamesPage() {
             className="mt-12 bg-card rounded-3xl p-6 shadow-card border border-border max-w-md mx-auto"
           >
             <h2 className="text-xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-              Your Game Stats <BarChart3 className="w-6 h-6 text-primary" />
+              {t('games.statsTitle')} <BarChart3 className="w-6 h-6 text-primary" />
             </h2>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-3xl font-extrabold text-primary">{stats.totalGames}</div>
-                <div className="text-sm text-muted-foreground">Games Played</div>
+                <div className="text-sm text-muted-foreground">{t('games.gamesPlayed')}</div>
               </div>
               <div>
                 <div className="text-3xl font-extrabold text-secondary">{totalPoints}</div>
-                <div className="text-sm text-muted-foreground">Total Points</div>
+                <div className="text-sm text-muted-foreground">{t('common.points')}</div>
               </div>
               <div>
                 <div className="text-3xl font-extrabold text-accent">{badgesEarned}</div>
-                <div className="text-sm text-muted-foreground">Badges Earned</div>
+                <div className="text-sm text-muted-foreground">{t('nav.badges')}</div>
               </div>
             </div>
           </motion.div>
@@ -188,10 +177,17 @@ export default function GamesPage() {
 }
 
 function GameCardContent({ game }: { game: Game }) {
+  const { t } = useTranslation();
   const difficultyColor = {
     Easy: 'bg-success/20 text-success',
     Medium: 'bg-warning/20 text-warning',
     Hard: 'bg-destructive/20 text-destructive',
+  };
+
+  const difficultyLabel = {
+    Easy: t('games.difficulty.easy'),
+    Medium: t('games.difficulty.medium'),
+    Hard: t('games.difficulty.hard'),
   };
 
   return (
@@ -205,15 +201,28 @@ function GameCardContent({ game }: { game: Game }) {
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-xl font-bold">{game.title}</h3>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${difficultyColor[game.difficulty]}`}>
-            {game.difficulty}
+            {difficultyLabel[game.difficulty]}
           </span>
         </div>
         <p className="text-muted-foreground mb-4">{game.description}</p>
         <div className="flex items-center gap-2">
           <Star className="w-5 h-5 text-warning" />
-          <span className="font-bold">{game.points} points</span>
+          <span className="font-bold">{game.points} {t('common.points').toLowerCase()}</span>
         </div>
       </div>
     </>
   );
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 },
+};

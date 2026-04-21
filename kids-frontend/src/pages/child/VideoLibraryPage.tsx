@@ -9,24 +9,26 @@ import { videosApi, favoritesApi, Video as VideoItem, profilesApi } from '@/serv
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-
-const ageGroups = ['All Ages', '0-3', '3-6', '6-9', '9-12'];
+import { useTranslation } from 'react-i18next';
 
 export default function VideoLibraryPage() {
+  const { t } = useTranslation();
   const { user, refreshUserData } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedAge, setSelectedAge] = useState('All Ages');
+  const [selectedAge, setSelectedAge] = useState('All');
   const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+  const ageGroups = ['All', '0-3', '3-6', '6-9', '9-12'];
 
   // Fetch videos from API
   const { data: videosData, isLoading: videosLoading } = useQuery({
     queryKey: ['videos', selectedCategory, selectedAge, searchQuery],
     queryFn: () => videosApi.getVideos({
       category: selectedCategory === 'All' ? undefined : selectedCategory,
-      age_group: selectedAge === 'All Ages' ? undefined : selectedAge,
+      age_group: selectedAge === 'All' ? undefined : selectedAge,
       search: searchQuery || undefined,
       limit: 50,
     }),
@@ -63,7 +65,7 @@ export default function VideoLibraryPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
-      toast.success('Added to Favorites!');
+      toast.success(t('videos.messages.addedToFavorites'));
     },
     onError: (_err, videoId) => {
       // Revert optimistic update on error
@@ -72,7 +74,7 @@ export default function VideoLibraryPage() {
         next.delete(videoId);
         return next;
       });
-      toast.error('Failed to add to favorites. Please try again.');
+      toast.error(t('videos.messages.failedToAddFavorite'));
     },
   });
 
@@ -89,19 +91,19 @@ export default function VideoLibraryPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
-      toast.success('Removed from Favorites');
+      toast.success(t('videos.messages.removedFromFavorites'));
     },
     onError: (_err, videoId) => {
       // Revert optimistic update on error
       setFavoriteIds(prev => new Set([...prev, videoId]));
-      toast.error('Failed to remove from favorites. Please try again.');
+      toast.error(t('videos.messages.failedToRemoveFavorite'));
     },
   });
 
   const toggleFavorite = (e: React.MouseEvent, videoId: string) => {
     e.stopPropagation();
     if (!user) {
-      toast.error('Please log in to save favorites');
+      toast.error(t('videos.messages.loginToSaveFavorite'));
       return;
     }
     if (favoriteIds.has(videoId)) {
@@ -137,9 +139,9 @@ export default function VideoLibraryPage() {
             className="mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-extrabold mb-2 flex items-center gap-3">
-              Video Library <Video className="w-8 h-8 text-primary" />
+              {t('videos.title')} <Video className="w-8 h-8 text-primary" />
             </h1>
-            <p className="text-muted-foreground">Watch fun and educational videos!</p>
+            <p className="text-muted-foreground">{t('videos.subtitle')}</p>
           </motion.div>
 
           {/* Video Player Modal */}
@@ -169,7 +171,7 @@ export default function VideoLibraryPage() {
                   <h2 className="text-2xl font-bold mb-2">{playingVideo.title}</h2>
                   <div className="flex items-center gap-4 text-muted-foreground">
                     <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                      {playingVideo.category}
+                      {t(`videos.categories.${playingVideo.category}`)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -181,7 +183,7 @@ export default function VideoLibraryPage() {
                     className="mt-4"
                     onClick={() => setPlayingVideo(null)}
                   >
-                    Close Video
+                    {t('common.close')}
                   </Button>
                 </div>
               </motion.div>
@@ -199,7 +201,7 @@ export default function VideoLibraryPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search videos..."
+                  placeholder={t('videos.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -214,7 +216,7 @@ export default function VideoLibraryPage() {
                     onClick={() => setSelectedAge(age)}
                     className="rounded-full"
                   >
-                    {age}
+                    {age === 'All' ? t('videos.allAges') : age}
                   </Button>
                 ))}
               </div>
@@ -225,12 +227,12 @@ export default function VideoLibraryPage() {
               {categories.map(category => (
                 <Button
                   key={category}
-                  variant={selectedCategory === category ? 'fun' : 'bubble'}
+                  variant={(selectedCategory === category) ? 'fun' : 'bubble'}
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
                   className="whitespace-nowrap"
                 >
-                  {category}
+                  {category === 'All' ? t('videos.categoryAll') : t(`videos.categories.${category}`)}
                 </Button>
               ))}
             </div>
@@ -241,7 +243,7 @@ export default function VideoLibraryPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="bg-card rounded-3xl overflow-hidden">
-                  <Skeleton className="aspect-video w-full" />
+                   <Skeleton className="aspect-video w-full" />
                   <div className="p-4">
                     <Skeleton className="h-6 w-3/4 mb-2" />
                     <Skeleton className="h-4 w-1/2" />
@@ -305,10 +307,10 @@ export default function VideoLibraryPage() {
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">{video.title}</h3>
                     <div className="flex items-center justify-between">
                       <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {video.category}
+                        {video.category ? t(`videos.categories.${video.category}`) : ''}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Ages {video.age_group}
+                        {t('videos.agePrefix')} {video.age_group}
                       </span>
                     </div>
                   </div>
@@ -324,8 +326,8 @@ export default function VideoLibraryPage() {
               className="text-center py-16"
             >
               <Search className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <h3 className="text-xl font-bold mb-2">No videos found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filters</p>
+              <h3 className="text-xl font-bold mb-2">{t('videos.noVideosFound')}</h3>
+              <p className="text-muted-foreground">{t('videos.adjustSearch')}</p>
             </motion.div>
           )}
         </div>

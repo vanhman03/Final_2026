@@ -9,10 +9,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { FloatingElements } from "@/components/FloatingElements";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 type PageState = "loading" | "form" | "success" | "error";
 
 export default function ResetPinPage() {
+  const { t } = useTranslation();
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [showPin, setShowPin] = useState(false);
@@ -33,7 +35,7 @@ export default function ResetPinPage() {
 
       if (error) {
         console.error("Session error:", error);
-        setErrorMessage("Invalid or expired reset link.");
+        setErrorMessage(t('pin.reset.messages.invalidLink'));
         setPageState("error");
         return;
       }
@@ -48,14 +50,12 @@ export default function ResetPinPage() {
             if (newSession) {
               setPageState("form");
             } else {
-              setErrorMessage(
-                "Invalid or expired reset link. Please request a new one.",
-              );
+              setErrorMessage(t('pin.reset.messages.requestNew'));
               setPageState("error");
             }
           }, 1000);
         } else {
-          setErrorMessage("Invalid reset link. Please request a new one.");
+          setErrorMessage(t('pin.reset.messages.requestNew'));
           setPageState("error");
         }
       } else {
@@ -64,15 +64,15 @@ export default function ResetPinPage() {
     };
 
     checkSession();
-  }, []);
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPin.length < 4 || newPin.length > 6) {
       toast({
-        title: "Invalid PIN",
-        description: "PIN must be 4-6 digits.",
+        title: t('pin.reset.messages.invalidPin'),
+        description: t('pin.errors.invalidPinDesc'),
         variant: "destructive",
       });
       return;
@@ -80,8 +80,8 @@ export default function ResetPinPage() {
 
     if (newPin !== confirmPin) {
       toast({
-        title: "PINs don't match",
-        description: "Please make sure your PINs match.",
+        title: t('pin.reset.messages.pinMismatch'),
+        description: t('pin.reset.messages.pinMismatchDesc'),
         variant: "destructive",
       });
       return;
@@ -94,14 +94,14 @@ export default function ResetPinPage() {
       setPageState("success");
 
       toast({
-        title: "PIN Reset Successful!",
-        description: "Your new PIN has been saved.",
+        title: t('pin.reset.messages.successTitle'),
+        description: t('pin.reset.messages.successDesc'),
       });
     } catch (error: any) {
       console.error("PIN reset error:", error);
       toast({
-        title: "Reset Failed",
-        description: error.message || "Failed to reset PIN. Please try again.",
+        title: t('pin.reset.messages.failed'),
+        description: error.message || t('common.error'),
         variant: "destructive",
       });
     } finally {
@@ -150,7 +150,7 @@ export default function ResetPinPage() {
           {pageState === "loading" && (
             <div className="text-center py-8">
               <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Verifying reset link...</p>
+              <p className="text-muted-foreground">{t('pin.reset.verifying')}</p>
             </div>
           )}
 
@@ -160,21 +160,21 @@ export default function ResetPinPage() {
                 <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <KeyRound className="w-8 h-8 text-primary" />
                 </div>
-                <h1 className="text-2xl font-extrabold mb-2">Reset Your PIN</h1>
+                <h1 className="text-2xl font-extrabold mb-2">{t('pin.reset.title')}</h1>
                 <p className="text-muted-foreground">
-                  Create a new 4-6 digit PIN
+                  {t('pin.reset.subtitle')}
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="newPin">New PIN</Label>
+                  <Label htmlFor="newPin">{t('pin.reset.newPin')}</Label>
                   <div className="relative">
                     <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       id="newPin"
                       type={showPin ? "text" : "password"}
-                      placeholder="Enter new PIN (4-6 digits)"
+                      placeholder={t('pin.reset.newPinPlaceholder')}
                       value={newPin}
                       onChange={(e) =>
                         setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))
@@ -198,13 +198,13 @@ export default function ResetPinPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPin">Confirm PIN</Label>
+                  <Label htmlFor="confirmPin">{t('pin.reset.confirmPin')}</Label>
                   <div className="relative">
                     <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       id="confirmPin"
                       type={showPin ? "text" : "password"}
-                      placeholder="Confirm your PIN"
+                      placeholder={t('pin.reset.confirmPinPlaceholder')}
                       value={confirmPin}
                       onChange={(e) =>
                         setConfirmPin(
@@ -227,10 +227,10 @@ export default function ResetPinPage() {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      Saving...
+                      {t('pin.reset.saving')}
                     </span>
                   ) : (
-                    "Reset PIN"
+                    t('pin.reset.button')
                   )}
                 </Button>
               </form>
@@ -244,11 +244,10 @@ export default function ResetPinPage() {
                 <CheckCircle className="w-8 h-8 text-success" />
               </div>
               <h1 className="text-2xl font-extrabold mb-2">
-                PIN Reset Complete!
+                {t('pin.reset.success')}
               </h1>
               <p className="text-muted-foreground mb-6">
-                Your new PIN has been saved. You can now use it to access Parent
-                Mode.
+                {t('pin.reset.successDesc')}
               </p>
 
               <Button
@@ -257,7 +256,7 @@ export default function ResetPinPage() {
                 className="w-full"
                 onClick={handleGoHome}
               >
-                Go to Home
+                {t('pin.reset.goHome')}
               </Button>
             </div>
           )}
@@ -269,7 +268,7 @@ export default function ResetPinPage() {
                 <AlertCircle className="w-8 h-8 text-destructive" />
               </div>
               <h1 className="text-2xl font-extrabold mb-2">
-                Reset Link Invalid
+                {t('pin.reset.error')}
               </h1>
               <p className="text-muted-foreground mb-6">{errorMessage}</p>
 
@@ -279,7 +278,7 @@ export default function ResetPinPage() {
                   className="w-full"
                   onClick={handleRequestNew}
                 >
-                  Back to Login
+                  {t('pin.reset.backToLogin')}
                 </Button>
               </div>
             </div>

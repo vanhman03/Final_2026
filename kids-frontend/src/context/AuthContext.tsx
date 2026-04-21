@@ -11,6 +11,8 @@ import { api, invalidateAuthToken } from "@/services/api";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { profilesApi } from "@/services/profilesApi";
 
+import i18n from "@/i18n/config";
+
 export type UserRole = "admin" | "parent";
 
 export interface User {
@@ -119,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } : prev);
 
         if (newTotal >= latestLimit) {
-          alert("Thời gian sử dụng web của bạn đã hết. Bạn sẽ bị đăng xuất.");
+          alert(i18n.t('parent.messages.limitReachedAlt'));
           logout();
         }
       } catch (err) {
@@ -189,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: supabaseUser.id,
         email: supabaseUser.email || "",
         name:
-          profileData?.display_name || supabaseUser.email?.split("@")[0] || "User",
+          profileData?.display_name || supabaseUser.email?.split("@")[0] || i18n.t('auth.unknownUser'),
         role,
         avatar: profileData?.avatar_url,
         screenTimeLimit,

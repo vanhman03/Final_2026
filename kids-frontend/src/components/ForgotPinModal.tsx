@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface ForgotPinModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function ForgotPinModal({
   onClose,
   onBackToPin,
 }: ForgotPinModalProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [modalState, setModalState] = useState<ModalState>("request");
@@ -37,8 +39,8 @@ export function ForgotPinModal({
 
     if (!emailToUse) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
+        title: t('pin.forgot.messages.emailRequired'),
+        description: t('pin.forgot.messages.emailRequiredDesc'),
         variant: "destructive",
       });
       return;
@@ -47,8 +49,8 @@ export function ForgotPinModal({
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailToUse)) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
+        title: t('pin.forgot.messages.invalidEmail'),
+        description: t('pin.forgot.messages.invalidEmailDesc'),
         variant: "destructive",
       });
       return;
@@ -63,11 +65,11 @@ export function ForgotPinModal({
       if (result.success) {
         setModalState("sent");
       } else {
-        setErrorMessage(result.error || "Failed to send reset email");
+        setErrorMessage(result.error || t('pin.forgot.messages.failedSend'));
         setModalState("error");
       }
     } catch (error) {
-      setErrorMessage("An unexpected error occurred");
+      setErrorMessage(t('pin.forgot.errorDesc'));
       setModalState("error");
     } finally {
       setIsLoading(false);
@@ -129,21 +131,21 @@ export function ForgotPinModal({
                   <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <KeyRound className="w-8 h-8 text-primary" />
                   </div>
-                  <h2 className="text-xl font-bold mb-2">Reset Your PIN</h2>
+                  <h2 className="text-xl font-bold mb-2">{t('pin.forgot.title')}</h2>
                   <p className="text-sm text-muted-foreground">
-                    We'll send you an email with instructions to reset your PIN.
+                    {t('pin.forgot.subtitle')}
                   </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email Address</Label>
+                    <Label htmlFor="reset-email">{t('pin.forgot.emailLabel')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
                         id="reset-email"
                         type="email"
-                        placeholder={defaultEmail || "Enter your email"}
+                        placeholder={defaultEmail || t('pin.forgot.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-12 h-12 rounded-xl"
@@ -152,7 +154,7 @@ export function ForgotPinModal({
                     </div>
                     {defaultEmail && !email && (
                       <p className="text-xs text-muted-foreground">
-                        Using: {defaultEmail}
+                        {t('pin.forgot.usingEmail', { email: defaultEmail })}
                       </p>
                     )}
                   </div>
@@ -167,10 +169,10 @@ export function ForgotPinModal({
                     {isLoading ? (
                       <span className="flex items-center gap-2">
                         <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                        Sending...
+                        {t('pin.forgot.sending')}
                       </span>
                     ) : (
-                      "Send Reset Email"
+                      t('pin.forgot.sendEmail')
                     )}
                   </Button>
 
@@ -180,7 +182,7 @@ export function ForgotPinModal({
                       onClick={handleBackToPin}
                       className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      Back to PIN entry
+                      {t('pin.forgot.back')}
                     </button>
                   )}
                 </form>
@@ -193,10 +195,9 @@ export function ForgotPinModal({
                 <div className="w-16 h-16 bg-success/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">Email Sent!</h2>
+                <h2 className="text-xl font-bold mb-2">{t('pin.forgot.sentTitle')}</h2>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Check your inbox for instructions to reset your PIN. The link
-                  will expire in 1 hour.
+                  {t('pin.forgot.sentDesc')}
                 </p>
 
                 <div className="space-y-3">
@@ -205,16 +206,16 @@ export function ForgotPinModal({
                     className="w-full"
                     onClick={handleClose}
                   >
-                    Close
+                    {t('common.close')}
                   </Button>
 
                   <p className="text-xs text-muted-foreground">
-                    Didn't receive the email?{" "}
+                    {t('pin.forgot.notReceived')}{" "}
                     <button
                       onClick={handleTryAgain}
                       className="text-primary hover:underline"
                     >
-                      Try again
+                      {t('pin.forgot.tryAgain')}
                     </button>
                   </p>
                 </div>
@@ -227,10 +228,9 @@ export function ForgotPinModal({
                 <div className="w-16 h-16 bg-destructive/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <AlertCircle className="w-8 h-8 text-destructive" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">Something Went Wrong</h2>
+                <h2 className="text-xl font-bold mb-2">{t('pin.forgot.errorTitle')}</h2>
                 <p className="text-sm text-muted-foreground mb-6">
-                  {errorMessage ||
-                    "Unable to send reset email. Please try again."}
+                  {errorMessage || t('pin.forgot.errorDesc')}
                 </p>
 
                 <div className="space-y-3">
@@ -239,7 +239,7 @@ export function ForgotPinModal({
                     className="w-full"
                     onClick={handleTryAgain}
                   >
-                    Try Again
+                    {t('pin.forgot.tryAgain')}
                   </Button>
 
                   <Button
@@ -247,7 +247,7 @@ export function ForgotPinModal({
                     className="w-full"
                     onClick={handleClose}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </div>

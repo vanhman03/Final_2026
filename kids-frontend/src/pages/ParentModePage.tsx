@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { gamesApi, GameActivity } from "@/services/gamesApi";
 import { profilesApi, ProfileStats, ScreenTimeStatus } from "@/services/profilesApi";
+import { useTranslation } from "react-i18next";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,6 +35,7 @@ const GAME_TYPE_ICONS: Record<string, LucideIcon> = {
 };
 
 export default function ParentModePage() {
+  const { t } = useTranslation();
   const { user, verifyPin, updatePin, refreshUserData, pauseScreenTime, resumeScreenTime } = useAuth();
   const { isParentModeActive, deactivateParentMode } = useParentMode();
   const navigate = useNavigate();
@@ -53,15 +55,13 @@ export default function ParentModePage() {
   const [showRecentVideos, setShowRecentVideos] = useState(false);
 
   // ── Screen-time limit local state ────────────────────────────────────────
-  // We keep a local copy so the input is responsive without firing an API call
-  // on every keystroke / arrow-click.
   const [limitInput, setLimitInput] = useState<number>(user?.screenTimeLimit ?? 60);
   const [isSavingLimit, setIsSavingLimit] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [limitDirty, setLimitDirty] = useState(false);
   const [isEditingLimit, setIsEditingLimit] = useState(false);
 
-  // Keep local input in sync if the user object changes (e.g. after refreshUserData)
+  // Keep local input in sync if the user object changes
   useEffect(() => {
     if (!limitDirty) {
       setLimitInput(user?.screenTimeLimit ?? 60);
@@ -80,13 +80,13 @@ export default function ParentModePage() {
         setNextResetAt(status.next_reset_at);
       } catch { /* non-fatal */ }
       setLimitDirty(false);
-      toast({ title: "Đã lưu", description: `Giới hạn thời gian: ${value} phút. Đồng hồ đếm mới bắt đầu.` });
+      toast({ title: t('parent.messages.saved'), description: t('parent.messages.limitDesc', { count: value }) });
     } catch {
-      toast({ title: "Lỗi", description: "Không thể cập nhật giới hạn", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('parent.messages.updateFailed'), variant: "destructive" });
     } finally {
       setIsSavingLimit(false);
     }
-  }, [refreshUserData, toast]);
+  }, [refreshUserData, toast, t]);
 
   const handleReset = useCallback(async () => {
     setIsResetting(true);
@@ -94,13 +94,13 @@ export default function ParentModePage() {
       const status = await profilesApi.resetWatchTime();
       setNextResetAt(status.next_reset_at);
       await refreshUserData();
-      toast({ title: "Đã đặt lại", description: "Thời gian xem đã được đặt về 0, đặt lại sau 24h." });
+      toast({ title: t('parent.messages.reset'), description: t('parent.messages.resetDesc') });
     } catch {
-      toast({ title: "Lỗi", description: "Không thể đặt lại thời gian xem", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('parent.messages.updateFailed'), variant: "destructive" });
     } finally {
       setIsResetting(false);
     }
-  }, [refreshUserData, toast]);
+  }, [refreshUserData, toast, t]);
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
@@ -152,20 +152,20 @@ export default function ParentModePage() {
 
   const handlePinChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentPin.length < 4) return toast({ title: "PIN không hợp lệ", description: "PIN phải có 4-6 chữ số.", variant: "destructive" });
-    if (newPin.length < 4) return toast({ title: "PIN mới không hợp lệ", description: "PIN mới phải có 4-6 chữ số.", variant: "destructive" });
-    if (newPin !== confirmNewPin) return toast({ title: "PIN không khớp", description: "Xác nhận PIN phải trùng với PIN mới.", variant: "destructive" });
-    if (currentPin === newPin) return toast({ title: "PIN giống nhau", description: "PIN mới phải khác PIN hiện tại.", variant: "destructive" });
+    if (currentPin.length < 4) return toast({ title: t('parent.messages.invalidPin'), description: t('parent.messages.invalidPinDesc'), variant: "destructive" });
+    if (newPin.length < 4) return toast({ title: t('parent.messages.invalidPin'), description: t('parent.messages.invalidPinDesc'), variant: "destructive" });
+    if (newPin !== confirmNewPin) return toast({ title: t('parent.messages.pinMismatch'), description: t('parent.messages.pinMismatchDesc'), variant: "destructive" });
+    if (currentPin === newPin) return toast({ title: t('parent.messages.pinSame'), description: t('parent.messages.pinSameDesc'), variant: "destructive" });
 
     setIsChangingPin(true);
     try {
       const isValid = await verifyPin(currentPin);
-      if (!isValid) return toast({ title: "PIN sai", description: "PIN hiện tại không đúng.", variant: "destructive" });
+      if (!isValid) return toast({ title: t('parent.messages.wrongPin'), description: t('parent.messages.wrongPinDesc'), variant: "destructive" });
       await updatePin(newPin);
-      toast({ title: "Đã đổi PIN!", description: "PIN đã được cập nhật thành công." });
+      toast({ title: t('parent.messages.pinUpdated'), description: t('parent.messages.pinUpdatedDesc') });
       setCurrentPin(""); setNewPin(""); setConfirmNewPin(""); setShowPinChange(false);
     } catch (error: any) {
-      toast({ title: "Lỗi đổi PIN", description: error.message || "Vui lòng thử lại.", variant: "destructive" });
+      toast({ title: t('parent.messages.updateFailed'), description: error.message || t('common.error'), variant: "destructive" });
     } finally {
       setIsChangingPin(false);
     }
@@ -195,14 +195,14 @@ export default function ParentModePage() {
                   </div>
                   <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-teal-600">
-                      Chế Độ Phụ Huynh
+                      {t('parent.title')}
                     </h1>
-                    <p className="text-muted-foreground text-sm">Theo dõi hoạt động của bé</p>
+                    <p className="text-muted-foreground text-sm">{t('parent.subtitle')}</p>
                   </div>
                 </div>
               </div>
               <Button variant="outline" onClick={handleExitParentMode} className="hidden md:flex gap-2 rounded-2xl">
-                <Shield className="w-4 h-4" /> Thoát chế độ phụ huynh
+                <Shield className="w-4 h-4" /> {t('parent.exit')}
               </Button>
             </div>
           </motion.div>
@@ -210,10 +210,10 @@ export default function ParentModePage() {
           {/* Quick Stats */}
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { id: 'videos', icon: Video, value: `${profileStats?.videosWatchedCount || user?.videos_watched_count || 0} video`, label: 'Số video đã xem', gradient: 'from-blue-400 to-cyan-500' },
-              { id: 'points', icon: Star, value: points, label: 'Điểm thưởng', gradient: 'from-yellow-400 to-orange-500' },
-              { id: 'games', icon: Gamepad2, value: gameHistory.length, label: 'Trò chơi đã chơi', gradient: 'from-purple-400 to-indigo-500' },
-              { id: 'badges', icon: Trophy, value: badges.length, label: 'Huy hiệu', gradient: 'from-pink-400 to-rose-500' },
+              { id: 'videos', icon: Video, value: t('common.videoCount', { count: profileStats?.videosWatchedCount || user?.videos_watched_count || 0 }), label: t('parent.stats.videos'), gradient: 'from-blue-400 to-cyan-500' },
+              { id: 'points', icon: Star, value: points, label: t('parent.stats.points'), gradient: 'from-yellow-400 to-orange-500' },
+              { id: 'games', icon: Gamepad2, value: gameHistory.length, label: t('parent.stats.games'), gradient: 'from-purple-400 to-indigo-500' },
+              { id: 'badges', icon: Trophy, value: badges.length, label: t('parent.stats.badges'), gradient: 'from-pink-400 to-rose-500' },
             ].map((stat) => (
               <motion.div key={stat.label} variants={itemVariants}
                 className={`bg-white dark:bg-card rounded-2xl p-5 shadow-md border ${stat.id === 'videos' ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg hover:ring-2 hover:ring-blue-200 transition-all duration-300 transform hover:scale-[1.03]' : ''}`}
@@ -232,23 +232,23 @@ export default function ParentModePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="bg-white dark:bg-card rounded-3xl shadow-md border p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-500" />  Quản lý thời gian xem
+              <Clock className="w-5 h-5 text-blue-500" />  {t('parent.screenTime.title')}
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-muted-foreground text-sm">Tiến độ hôm nay</span>
-                  <span className="font-semibold text-sm">{user?.totalWatchTime || 0} / {user?.screenTimeLimit || 60} phút</span>
+                  <span className="text-muted-foreground text-sm">{t('parent.screenTime.todayProgress')}</span>
+                  <span className="font-semibold text-sm">{user?.totalWatchTime || 0} / {user?.screenTimeLimit || 60} {t('parent.screenTime.minutes')}</span>
                 </div>
                 <Progress value={screenTimeProgress} className="h-3 rounded-full" />
                 <p className="text-xs text-muted-foreground mt-2">
                   {screenTimeProgress >= 100
-                    ? "Đã đạt giới hạn thời gian hôm nay"
-                    : `Còn ${Math.round((user?.screenTimeLimit || 60) - (user?.totalWatchTime || 0))} phút`}
+                    ? t('parent.screenTime.limitReached')
+                    : t('parent.screenTime.minutesLeft', { count: Math.round((user?.screenTimeLimit || 60) - (user?.totalWatchTime || 0)) })}
                 </p>
                 {nextResetAt && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Tự động đặt lại lúc: {new Date(nextResetAt).toLocaleString('vi-VN')}
+                    {t('parent.screenTime.autoReset', { time: new Date(nextResetAt).toLocaleString() })}
                   </p>
                 )}
               </div>
@@ -264,20 +264,20 @@ export default function ParentModePage() {
                         onChange={handleLimitChange}
                         className="w-24 rounded-xl"
                       />
-                      <span className="text-sm font-medium">phút</span>
+                      <span className="text-sm font-medium">{t('parent.screenTime.minutes')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={cancelLimit}>Hủy</Button>
+                      <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={cancelLimit}>{t('common.cancel')}</Button>
                       <Button size="sm" className="rounded-xl h-8 bg-blue-500 hover:bg-blue-600 text-white" onClick={submitLimit} disabled={isSavingLimit}>
-                        {isSavingLimit ? "Đang lưu..." : "Xác nhận"}
+                        {isSavingLimit ? t('parent.screenTime.saving') : t('parent.screenTime.confirm')}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Giới hạn: {user?.screenTimeLimit || 60} phút</span>
+                    <span className="text-sm font-medium">{t('parent.security.pin')}: {user?.screenTimeLimit || 60} {t('parent.screenTime.minutes')}</span>
                     <Button size="sm" variant="outline" className="rounded-xl h-8" onClick={() => setIsEditingLimit(true)}>
-                      Đổi thời gian
+                      {t('parent.screenTime.changeLimit')}
                     </Button>
                   </div>
                 )}
@@ -289,7 +289,7 @@ export default function ParentModePage() {
                   className="rounded-xl gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-                  {isResetting ? "Đang đặt lại..." : "Đặt lại thời gian"}
+                  {isResetting ? t('parent.screenTime.resetting') : t('parent.screenTime.resetTime')}
                 </Button>
               </div>
             </div>
@@ -299,24 +299,24 @@ export default function ParentModePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="bg-white dark:bg-card rounded-3xl shadow-md border p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-indigo-500" />  Cài đặt bảo mật
+              <KeyRound className="w-5 h-5 text-indigo-500" />  {t('parent.security.title')}
             </h2>
             {!showPinChange ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">PIN phụ huynh</p>
-                  <p className="text-sm text-muted-foreground">{user?.hasPinSet ? "✅ PIN đã được thiết lập" : "⚠️ Chưa thiết lập PIN"}</p>
+                  <p className="font-medium">{t('parent.security.pin')}</p>
+                  <p className="text-sm text-muted-foreground">{user?.hasPinSet ? `✅ ${t('parent.security.pinSet')}` : `⚠️ ${t('parent.security.pinNotSet')}`}</p>
                 </div>
                 <Button variant="outline" onClick={() => setShowPinChange(true)} className="gap-2 rounded-2xl">
-                  <KeyRound className="w-4 h-4" /> Đổi PIN
+                  <KeyRound className="w-4 h-4" /> {t('parent.security.changePin')}
                 </Button>
               </div>
             ) : (
               <form onSubmit={handlePinChange} className="space-y-4 max-w-md">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPin">PIN hiện tại</Label>
+                  <Label htmlFor="currentPin">{t('parent.security.currentPin')}</Label>
                   <div className="relative">
-                    <Input id="currentPin" type={showPins ? "text" : "password"} placeholder="Nhập PIN hiện tại" value={currentPin}
+                    <Input id="currentPin" type={showPins ? "text" : "password"} placeholder={t('parent.security.currentPin')} value={currentPin}
                       onChange={e => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="pr-12 rounded-xl" maxLength={6} />
                     <button type="button" onClick={() => setShowPins(!showPins)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
                       {showPins ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -324,25 +324,25 @@ export default function ParentModePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="newPin">PIN mới</Label>
-                  <Input id="newPin" type={showPins ? "text" : "password"} placeholder="Nhập PIN mới (4-6 chữ số)" value={newPin}
+                  <Label htmlFor="newPin">{t('parent.security.newPin')}</Label>
+                  <Input id="newPin" type={showPins ? "text" : "password"} placeholder={`${t('parent.security.newPin')} (4-6 ${t('common.digits')})`} value={newPin}
                     onChange={e => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="rounded-xl" maxLength={6} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPin">Xác nhận PIN mới</Label>
-                  <Input id="confirmPin" type={showPins ? "text" : "password"} placeholder="Xác nhận PIN mới" value={confirmNewPin}
+                  <Label htmlFor="confirmPin">{t('parent.security.confirmPin')}</Label>
+                  <Input id="confirmPin" type={showPins ? "text" : "password"} placeholder={t('parent.security.confirmPin')} value={confirmNewPin}
                     onChange={e => setConfirmNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="rounded-xl" maxLength={6} />
                 </div>
                 <div className="flex gap-3">
                   <Button type="submit" className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white gap-2" disabled={isChangingPin || currentPin.length < 4 || newPin.length < 4}>
-                    {isChangingPin ? "Đang lưu..." : (
+                    {isChangingPin ? t('parent.security.saving') : (
                       <>
-                        <Save className="w-4 h-4" /> Lưu PIN mới
+                        <Save className="w-4 h-4" /> {t('parent.security.savePin')}
                       </>
                     )}
                   </Button>
                   <Button type="button" variant="outline" className="rounded-xl" onClick={() => { setShowPinChange(false); setCurrentPin(""); setNewPin(""); setConfirmNewPin(""); }}>
-                    Hủy
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </form>
@@ -356,7 +356,7 @@ export default function ParentModePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               className="bg-white dark:bg-card rounded-3xl shadow-md border p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Gamepad2 className="w-5 h-5 text-purple-500" />  Hoạt động chơi game gần đây
+                <Gamepad2 className="w-5 h-5 text-purple-500" />  {t('parent.activity.recentGames')}
               </h2>
               {isLoading ? (
                 <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted rounded-2xl animate-pulse" />)}</div>
@@ -373,15 +373,19 @@ export default function ParentModePage() {
                           })()}
                         </div>
                         <div>
-                          <p className="font-semibold capitalize">{game.game_type.replace(/-/g, ' ')}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(game.played_at).toLocaleDateString('vi-VN')}</p>
+                          <p className="font-semibold capitalize">
+                            {game.game_type === 'color-match' ? t('games.items.colorMatch.title') : 
+                             game.game_type === 'puzzle' ? t('games.items.puzzleFun.title') : 
+                             game.game_type.replace(/-/g, ' ')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{new Date(game.played_at).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-purple-600 flex items-center gap-1 justify-end">
-                          <Star className="w-4 h-4 fill-current" /> {game.score || 0} điểm
+                          <Star className="w-4 h-4 fill-current" /> {t('parent.activity.score', { count: game.score || 0 })}
                         </p>
-                        {game.level && <p className="text-xs text-muted-foreground">Cấp {game.level}</p>}
+                        {game.level && <p className="text-xs text-muted-foreground">{t('parent.activity.level', { count: game.level })}</p>}
                       </div>
                     </motion.div>
                   ))}
@@ -389,7 +393,7 @@ export default function ParentModePage() {
               ) : (
                 <div className="text-center py-8">
                   <Gamepad2 className="w-16 h-16 mx-auto mb-3 text-muted-foreground/30" />
-                  <p className="text-muted-foreground">Bé chưa chơi game nào</p>
+                  <p className="text-muted-foreground">{t('parent.activity.noGames')}</p>
                 </div>
               )}
             </motion.div>
@@ -399,39 +403,43 @@ export default function ParentModePage() {
               className="bg-white dark:bg-card rounded-3xl shadow-md border p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />  Huy hiệu & Thành tích
+                  <Trophy className="w-5 h-5 text-yellow-500" />  {t('parent.activity.badgesTitle')}
                 </h2>
                 <Link to="/badges">
                   <Button variant="outline" size="sm" className="rounded-xl text-xs gap-1">
-                    <Star className="w-3 h-3" /> Xem tất cả
+                    <Star className="w-3 h-3" /> {t('parent.activity.viewAll')}
                   </Button>
                 </Link>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {badges.length > 0 ? (
-                  badges.slice(0, 6).map((badge, idx) => (
-                    <motion.div key={badge} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 * idx, type: 'spring', stiffness: 200 }}
-                      className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full font-semibold text-sm shadow-sm">
-                      {badge}
-                    </motion.div>
-                  ))
+                  badges.slice(0, 6).map((badge, idx) => {
+                    // Try to finding i18n key for badge
+                    // This is a bit tricky since badge IDs might not match keys exactly
+                    return (
+                      <motion.div key={badge} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 * idx, type: 'spring', stiffness: 200 }}
+                        className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full font-semibold text-sm shadow-sm">
+                        {badge}
+                      </motion.div>
+                    );
+                  })
                 ) : (
-                  <p className="text-muted-foreground text-sm">Bé chưa có huy hiệu nào. Hãy khuyến khích bé học và chơi!</p>
+                  <p className="text-muted-foreground text-sm">{t('parent.activity.noBadges')}</p>
                 )}
               </div>
 
               <div className="pt-4 border-t border-border">
-                <h3 className="font-semibold mb-3 text-sm">⚡ Truy cập nhanh</h3>
+                <h3 className="font-semibold mb-3 text-sm">{t('parent.activity.quickAccess')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <Link to="/videos">
-                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Play className="w-4 h-4" /> Video</Button>
+                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Play className="w-4 h-4" /> {t('nav.videos')}</Button>
                   </Link>
                   <Link to="/games">
-                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Gamepad2 className="w-4 h-4" /> Games</Button>
+                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Gamepad2 className="w-4 h-4" /> {t('nav.games')}</Button>
                   </Link>
                   <Link to="/badges" className="col-span-2">
-                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Trophy className="w-4 h-4" /> Xem huy hiệu của bé</Button>
+                    <Button variant="outline" className="w-full gap-2 rounded-xl text-sm"><Trophy className="w-4 h-4" /> {t('badges.title')}</Button>
                   </Link>
                 </div>
               </div>
@@ -450,8 +458,8 @@ export default function ParentModePage() {
                 <Video className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-extrabold tracking-tight">Video bé đã xem</DialogTitle>
-                <DialogDescription className="text-blue-100 mt-1 font-medium">10 video mới nhất bé đã thích và xem</DialogDescription>
+                <DialogTitle className="text-2xl font-extrabold tracking-tight">{t('parent.history.videosTitle')}</DialogTitle>
+                <DialogDescription className="text-blue-100 mt-1 font-medium">{t('parent.history.videosSubtitle')}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -465,7 +473,7 @@ export default function ParentModePage() {
                       {hv.video?.youtube_video_id ? (
                         <img 
                           src={`https://img.youtube.com/vi/${hv.video.youtube_video_id}/mqdefault.jpg`} 
-                          alt={hv.video?.title || "Video"}
+                          alt={hv.video?.title || t('parent.history.unknownVideo')}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (
@@ -476,9 +484,9 @@ export default function ParentModePage() {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <h4 className="font-bold text-base line-clamp-2 text-slate-800 dark:text-slate-100 leading-tight mb-2 hover:text-blue-500 cursor-pointer" onClick={() => window.open(`https://youtube.com/watch?v=${hv.video?.youtube_video_id}`, '_blank')}>{hv.video?.title || "Video không xác định"}</h4>
+                      <h4 className="font-bold text-base line-clamp-2 text-slate-800 dark:text-slate-100 leading-tight mb-2 hover:text-blue-500 cursor-pointer" onClick={() => window.open(`https://youtube.com/watch?v=${hv.video?.youtube_video_id}`, '_blank')}>{hv.video?.title || t('parent.history.unknownVideo')}</h4>
                       <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">
-                        {new Date(hv.watched_at).toLocaleString('vi-VN')}
+                        {new Date(hv.watched_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -487,7 +495,7 @@ export default function ParentModePage() {
             ) : (
               <div className="h-full flex flex-col items-center justify-center py-12 text-slate-400">
                 <Video className="w-16 h-16 mb-4 opacity-50" />
-                <p className="text-lg font-medium text-slate-500">Chưa có hoặc lịch sử chưa được ghi nhận.</p>
+                <p className="text-lg font-medium text-slate-500">{t('parent.history.noHistory')}</p>
               </div>
             )}
           </ScrollArea>

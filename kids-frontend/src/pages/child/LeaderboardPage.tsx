@@ -8,25 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { gamesApi } from '@/services/gamesApi';
 import { useAuth } from '@/context/AuthContext';
-
-const GAME_TYPES = [
-  { value: '', label: 'All Games' },
-  { value: 'color-match', label: 'Color Match' },
-  { value: 'puzzle', label: 'Puzzle' },
-];
-
-const RANK_STYLES = [
-  'from-yellow-400 to-amber-500 text-white shadow-lg shadow-yellow-200',
-  'from-slate-300 to-slate-400 text-white shadow-lg shadow-slate-200',
-  'from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-200',
-];
-
-// Removed RANK_EMOJI array to use Lucide icons
+import { useTranslation } from 'react-i18next';
 
 export default function LeaderboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedGame, setSelectedGame] = useState('');
+
+  const GAME_TYPES = [
+    { value: '', label: t('leaderboard.allGames') },
+    { value: 'color-match', label: t('games.items.colorMatch.title') },
+    { value: 'puzzle', label: t('games.items.puzzleFun.title') },
+  ];
+
+  const RANK_STYLES = [
+    'from-yellow-400 to-amber-500 text-white shadow-lg shadow-yellow-200',
+    'from-slate-300 to-slate-400 text-white shadow-lg shadow-slate-200',
+    'from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-200',
+  ];
 
   const { data: leaderboard = [], isLoading } = useQuery({
     queryKey: ['leaderboard', selectedGame],
@@ -50,9 +50,9 @@ export default function LeaderboardPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
-                    Leaderboard
+                    {t('leaderboard.title')}
                   </h1>
-                  <p className="text-muted-foreground">Top scores from all players</p>
+                  <p className="text-muted-foreground">{t('leaderboard.subtitle')}</p>
                 </div>
               </div>
             </div>
@@ -88,9 +88,9 @@ export default function LeaderboardPage() {
           {!isLoading && leaderboard.length === 0 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
               <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <h3 className="text-xl font-bold mb-2">No scores yet</h3>
-              <p className="text-muted-foreground">Be the first to play and claim the top spot!</p>
-              <Button className="mt-4" onClick={() => navigate('/games')}>Play Now</Button>
+              <h3 className="text-xl font-bold mb-2">{t('leaderboard.noScores')}</h3>
+              <p className="text-muted-foreground">{t('leaderboard.noScoresDesc')}</p>
+              <Button className="mt-4" onClick={() => navigate('/games')}>{t('leaderboard.playNow')}</Button>
             </motion.div>
           )}
 
@@ -126,10 +126,12 @@ export default function LeaderboardPage() {
                     {/* Player info */}
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold truncate ${isCurrentUser ? 'text-primary' : ''}`}>
-                        {isCurrentUser ? `${user?.name} (You)` : `Player ${entry.child_id.slice(0, 6)}`}
+                        {isCurrentUser ? `${user?.name} (${t('leaderboard.you')})` : `${t('leaderboard.player')} ${entry.child_id.slice(0, 6)}`}
                       </p>
                       <p className="text-xs text-muted-foreground capitalize">
-                        {entry.game_type.replace('-', ' ')}
+                        {entry.game_type === 'color-match' ? t('games.items.colorMatch.title') : 
+                         entry.game_type === 'puzzle' ? t('games.items.puzzleFun.title') : 
+                         entry.game_type.replace('-', ' ')}
                         {entry.level ? ` · ${entry.level}` : ''}
                       </p>
                     </div>

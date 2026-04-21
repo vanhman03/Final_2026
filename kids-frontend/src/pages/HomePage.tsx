@@ -9,53 +9,42 @@ import { useAuth } from '@/context/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { videosApi, Video as VideoItem, profilesApi } from '@/services';
-
-const quickActions = [
-  {
-    icon: Play,
-    label: 'Watch Videos',
-    href: '/videos',
-    color: 'bg-primary',
-  },
-  {
-    icon: Gamepad2,
-    label: 'Play Games',
-    href: '/games',
-    color: 'bg-secondary',
-  },
-  {
-    icon: Trophy,
-    label: 'My Badges',
-    href: '/badges',
-    color: 'bg-accent',
-  },
-  {
-    icon: Heart,
-    label: 'Favorites',
-    href: '/favorites',
-    color: 'bg-success',
-  },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+import { useTranslation } from 'react-i18next';
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const { user, refreshUserData } = useAuth();
   const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
 
+  const quickActions = [
+    {
+      icon: Play,
+      label: t('home.watchVideos'),
+      href: '/videos',
+      color: 'bg-primary',
+    },
+    {
+      icon: Gamepad2,
+      label: t('home.playGames'),
+      href: '/games',
+      color: 'bg-secondary',
+    },
+    {
+      icon: Trophy,
+      label: t('home.achievementsTitle'),
+      href: '/badges',
+      color: 'bg-accent',
+    },
+    {
+      icon: Heart,
+      label: t('nav.favorites'),
+      href: '/favorites',
+      color: 'bg-success',
+    },
+  ];
+
   // Use user's profile data directly (no more child concept)
-  const displayName = user?.name || 'Friend';
+  const displayName = user?.name || t('auth.unknownUser');
   const points = user?.points || 0;
   const badges = user?.badges || [];
   const screenTimeLimit = user?.screenTimeLimit || 60;
@@ -93,9 +82,9 @@ export default function HomePage() {
                 </motion.div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-extrabold">
-                    Hi, <span className="text-primary">{displayName}</span>!
+                    {t('home.welcomeBack')} <span className="text-primary">{displayName}</span>!
                   </h1>
-                  <p className="text-muted-foreground">Ready for some fun learning today?</p>
+                  <p className="text-muted-foreground">{t('home.readyToLearn')}</p>
                 </div>
               </div>
 
@@ -103,12 +92,12 @@ export default function HomePage() {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2 bg-warning/20 px-4 py-2 rounded-2xl">
                   <Star className="w-6 h-6 text-warning" />
-                  <span className="font-bold text-lg">{points} Points</span>
+                  <span className="font-bold text-lg">{points} {t('common.points')}</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4" />
-                    <span>{screenTimeUsed} / {screenTimeLimit} min</span>
+                    <span>{screenTimeUsed} / {screenTimeLimit} {t('parent.screenTime.minutes')}</span>
                   </div>
                   <Progress value={screenTimeProgress} className="h-2 w-32" />
                 </div>
@@ -168,7 +157,7 @@ export default function HomePage() {
                   <h2 className="text-2xl font-bold mb-2">{playingVideo.title}</h2>
                   <div className="flex items-center gap-4 text-muted-foreground">
                     <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                      {playingVideo.category}
+                      {t(`videos.categories.${playingVideo.category}`)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -180,7 +169,7 @@ export default function HomePage() {
                     className="mt-4"
                     onClick={() => setPlayingVideo(null)}
                   >
-                    Close Video
+                    {t('common.close')}
                   </Button>
                 </div>
               </motion.div>
@@ -196,10 +185,10 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                Continue Watching <Video className="w-6 h-6 text-primary" />
+                {t('home.continueWatching')} <Video className="w-6 h-6 text-primary" />
               </h2>
               <Link to="/videos">
-                <Button variant="ghost">See All</Button>
+                <Button variant="ghost">{t('home.seeAll')}</Button>
               </Link>
             </div>
 
@@ -258,9 +247,9 @@ export default function HomePage() {
                       <h3 className="font-bold truncate">{video.title}</h3>
                       <div className="flex items-center justify-between mt-1 text-sm text-muted-foreground">
                         <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
-                          {video.category}
+                          {video.category ? t(`videos.categories.${video.category}`) : ''}
                         </span>
-                        <span className="text-xs">Ages {video.age_group}</span>
+                        <span className="text-xs">{t('videos.agePrefix')} {video.age_group}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -271,7 +260,7 @@ export default function HomePage() {
             {!videosLoading && recentVideos.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Video className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                <p>No videos yet. Check back soon!</p>
+                <p>{t('home.noVideos')}</p>
               </div>
             )}
           </motion.section>
@@ -283,7 +272,7 @@ export default function HomePage() {
             transition={{ delay: 0.4 }}
           >
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              My Badges <Trophy className="w-6 h-6 text-primary" />
+              {t('home.achievementsTitle')} <Trophy className="w-6 h-6 text-primary" />
             </h2>
             <div className="flex flex-wrap gap-3">
               {badges.length > 0 ? (
@@ -303,7 +292,7 @@ export default function HomePage() {
                   </motion.div>
                 ))
               ) : (
-                <p className="text-muted-foreground">Start watching videos and playing games to earn badges!</p>
+                <p className="text-muted-foreground">{t('home.earnBadgesPrompt')}</p>
               )}
             </div>
           </motion.section>
@@ -312,3 +301,16 @@ export default function HomePage() {
     </Layout>
   );
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
