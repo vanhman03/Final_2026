@@ -23,7 +23,7 @@ export const achievementService = {
      */
     checkAchievements: async (userId: string, activityData: ActivityData) => {
         try {
-            // 1. Fetch current profile (badges + points + videos_watched_count)
+            // 1. Fetch current profile (points + videos)
             const { data: profile, error: fetchError } = await supabase
                 .from('profiles')
                 .select('badges, points, videos_watched_count')
@@ -35,50 +35,88 @@ export const achievementService = {
                 return [];
             }
 
-            // 2. Fetch total games played so cumulative badges can be evaluated
-            const { count: totalGames, error: countError } = await supabase
+            // 2. Fetch enriched historical stats
+            // Get total games
+            const { count: totalGames } = await supabase
                 .from('game_activities')
                 .select('id', { count: 'exact', head: true })
                 .eq('user_id', userId);
 
-            if (countError) {
-                console.error('AchievementService: Failed to count game activities', countError);
-            }
+            // Get completed unique levels
+            const { data: completedLevels } = await supabase
+                .from('game_activities')
+                .select('game_type, level')
+                .eq('user_id', userId);
 
-            const currentBadges = Array.isArray(profile.badges) ? profile.badges : [];
+            // Get max score ever
+            const { data: maxScoreData } = await supabase
+                .from('game_activities')
+                .select('score')
+                .eq('user_id', userId)
+                .order('score', { ascending: false })
+                .limit(1);
+            
+            // Get max streak in color-match
+            const { data: maxStreakData } = await supabase
+                .from('game_activities')
+                .select('streak')
+                .eq('user_id', userId)
+                .eq('game_type', 'color-match')
+                .order('streak', { ascending: false })
+                .limit(1);
 
-            // Merge activity data with live profile stats so every badge condition
-            // has access to both per-game values and cumulative totals.
             const mergedData = {
                 ...activityData,
                 points: profile.points,
                 totalGames: totalGames ?? 0,
                 videos_watched_count: profile.videos_watched_count ?? 0,
+                completedLevels: completedLevels || [],
+                maxScore: maxScoreData?.[0]?.score || 0,
+                maxStreakColorMatch: maxStreakData?.[0]?.streak || 0
             };
 
-            // 3. Filter badges the user doesn't have yet but now qualifies for
-            const newBadges = ALL_BADGES.filter(badge => {
-                const alreadyHas = currentBadges.includes(badge.id);
-                if (alreadyHas) return false;
-
+            // 3. Re-evaluate ALL badges to see which ones are currently earned
+            const earnedBadgeIds: string[] = [];
+            
+            // First pass: Evaluate all regular badges
+            ALL_BADGES.filter(b => b.id !== '🌈 Rainbow Achiever').forEach(badge => {
                 try {
-                    return badge.condition(mergedData, currentBadges);
+                    if (badge.condition(mergedData)) {
+                        earnedBadgeIds.push(badge.id);
+                    }
                 } catch (e) {
-                    console.error(`AchievementService: Error checking condition for badge ${badge.id}`, e);
-                    return false;
+                    console.error(`AchievementService: Error checking badge ${badge.id}`, e);
                 }
             });
 
-            if (newBadges.length === 0) return [];
+            // Second pass: Evaluate Rainbow Achiever (which depends on other badges)
+            const rainbowBadge = ALL_BADGES.find(b => b.id === '🌈 Rainbow Achiever');
+            if (rainbowBadge) {
+                try {
+                    if (rainbowBadge.condition(mergedData, earnedBadgeIds)) {
+                        earnedBadgeIds.push(rainbowBadge.id);
+                    }
+                } catch (e) {
+                    console.error(`AchievementService: Error checking Rainbow Achiever`, e);
+                }
+            }
 
-            // 4. Persist newly earned badges
-            const newBadgeIds = newBadges.map(b => b.id);
-            const updatedBadges = [...currentBadges, ...newBadgeIds];
+            // 4. Compare with current badges to find NEW ones and detect changes
+            const currentBadges = Array.isArray(profile.badges) ? profile.badges : [];
+            
+            // Determine if the badges list has actually changed
+            const earnedSet = new Set(earnedBadgeIds);
+            const currentSet = new Set(currentBadges);
+            const isChanged = earnedBadgeIds.length !== currentBadges.length || 
+                              earnedBadgeIds.some(id => !currentSet.has(id));
 
+            if (!isChanged) return [];
+
+            // 5. Update database with the CURRENT accurate list
             const { error: updateError } = await supabase
                 .from('profiles')
                 .update({
-                    badges: updatedBadges,
+                    badges: earnedBadgeIds,
                     updated_at: new Date().toISOString()
                 })
                 .eq('user_id', userId);
@@ -88,7 +126,9 @@ export const achievementService = {
                 return [];
             }
 
-            return newBadges;
+            // Return only the NEWLY earned badges for the UI notification
+            const newBadgeIds = earnedBadgeIds.filter(id => !currentSet.has(id));
+            return ALL_BADGES.filter(b => newBadgeIds.includes(b.id));
         } catch (error) {
             console.error('AchievementService: Unexpected error', error);
             return [];

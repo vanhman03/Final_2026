@@ -39,7 +39,7 @@ export const ALL_BADGES: Badge[] = [
         emoji: '🏆', 
         desc: 'Đạt điểm trên 100', 
         color: 'from-amber-400 to-yellow-500',
-        condition: (data) => data.score >= 100
+        condition: (data) => data.score >= 100 || (data.maxScore ?? 0) >= 100
     },
     { 
         id: '🔥 Color Streak Master', 
@@ -47,7 +47,7 @@ export const ALL_BADGES: Badge[] = [
         emoji: '🔥', 
         desc: '8 chuỗi thắng liên tiếp trong Color Match!', 
         color: 'from-orange-500 to-red-600',
-        condition: (data) => data.game_type === 'color-match' && data.streak >= 8
+        condition: (data) => (data.game_type === 'color-match' && data.streak >= 8) || (data.maxStreakColorMatch ?? 0) >= 8
     },
     { 
         id: '🧩 Puzzle Pro', 
@@ -55,7 +55,9 @@ export const ALL_BADGES: Badge[] = [
         emoji: '🧩', 
         desc: 'Hoàn thành Puzzle mức độ Trung bình!', 
         color: 'from-blue-500 to-indigo-600',
-        condition: (data) => data.game_type === 'puzzle' && (data.level === 'medium' || data.level === 'hard')
+        condition: (data) => 
+            (data.game_type === 'puzzle' && (data.level === 'medium' || data.level === 'hard')) ||
+            (data.completedLevels?.some((l: any) => l.game_type === 'puzzle' && (l.level === 'medium' || l.level === 'hard')))
     },
     { 
         id: '🧠 Puzzle Zen Master', 
@@ -63,7 +65,9 @@ export const ALL_BADGES: Badge[] = [
         emoji: '🧠', 
         desc: 'Hoàn thành Puzzle mức độ Khó!', 
         color: 'from-purple-600 to-pink-600',
-        condition: (data) => data.game_type === 'puzzle' && data.level === 'hard'
+        condition: (data) => 
+            (data.game_type === 'puzzle' && data.level === 'hard') ||
+            (data.completedLevels?.some((l: any) => l.game_type === 'puzzle' && l.level === 'hard'))
     },
     {
         id: '🌈 Rainbow Achiever',
@@ -75,6 +79,8 @@ export const ALL_BADGES: Badge[] = [
             const otherBadgeIds = ALL_BADGES
                 .filter(b => b.id !== '🌈 Rainbow Achiever')
                 .map(b => b.id);
+            // Quan trọng: Ở đây currentBadges là danh sách huy hiệu đang có 
+            // Nhưng khi re-evaluate, ta cần truyền danh sách các huy hiệu ĐÃ qualify trong lượt check này
             return otherBadgeIds.every(id => currentBadges.includes(id));
         }
     },

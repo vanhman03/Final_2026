@@ -123,12 +123,13 @@ router.get('/', authenticateUser, async (req: Request, res: Response) => {
  */
 router.post('/:game_type/activity', authenticateUser, async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.id;
+        const userId = req.user?.id;       //id from Token JWT supabase
         if (!userId) return errorResponse(res, 'User ID not found', 401);
 
         const { game_type } = req.params;
         const gameData = gameActivitySchema.parse({ ...req.body, game_type });
 
+        //save in game_activities
         const { data: activity, error } = await supabase
             .from('game_activities')
             .insert([{ ...gameData, user_id: userId, played_at: new Date().toISOString() }])
@@ -153,7 +154,7 @@ router.post('/:game_type/activity', authenticateUser, async (req: Request, res: 
                 played_at: new Date().toISOString(),
             });
         }
-
+         //return frontend
         return successResponse(res, 'Game activity logged', { 
             activity, 
             newBadges: newBadges.map(b => b.id) 
