@@ -485,10 +485,7 @@ export default function AdminDashboard() {
                         <form onSubmit={handleProductSubmit} className="space-y-4 mt-2">
                           <div><Label>{t('admin.products.name')}</Label><Input value={productForm.name} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required className="mt-1 rounded-xl" placeholder={t('admin.products.namePlaceholder')} /></div>
                           <div><Label>{t('admin.products.description')}</Label><Input value={productForm.description} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} className="mt-1 rounded-xl" placeholder={t('admin.products.descriptionPlaceholder')} /></div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div><Label>{t('admin.products.price')}</Label><Input type="number" min="0" value={productForm.price} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} required className="mt-1 rounded-xl" placeholder="50000" /></div>
-                            <div><Label>{t('admin.products.ageGroup')}</Label><Input value={productForm.age_group} onChange={e => setProductForm(f => ({ ...f, age_group: e.target.value }))} className="mt-1 rounded-xl" placeholder="3-6" /></div>
-                          </div>
+                          <div><Label>{t('admin.products.price')}</Label><Input type="number" min="0" value={productForm.price} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} required className="mt-1 rounded-xl" placeholder="50000" /></div>
                           <div><Label>{t('admin.products.category')}</Label>
                             <Select value={productForm.category} onValueChange={v => setProductForm(f => ({ ...f, category: v }))}>
                               <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
@@ -557,7 +554,7 @@ export default function AdminDashboard() {
                   <div className="flex gap-3 mb-6 flex-wrap">
                     {['all', 'pending', 'completed', 'failed', 'cancelled'].map(s => (
                       <button key={s} onClick={() => setOrderStatusFilter(s)}
-                        className={`px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${orderStatusFilter === s ? 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow' : 'bg-white dark:bg-card border text-muted-foreground hover:bg-muted'}`}>
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${orderStatusFilter === s ? 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow' : 'bg-white dark:bg-card border text-muted-foreground hover:bg-muted'}`}>
                         {s === 'all' ? <ShoppingCart className="w-4 h-4" /> : s === 'pending' ? <Clock className="w-4 h-4" /> : s === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : s === 'failed' ? <XCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
                         {s === 'all' ? t('admin.orders.all') : s === 'pending' ? t('admin.orders.pending') : s === 'completed' ? t('admin.orders.completed') : s === 'failed' ? t('admin.orders.failed') : t('admin.orders.cancelled')}
                       </button>

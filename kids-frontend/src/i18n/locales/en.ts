@@ -597,6 +597,8 @@ export const en = {
       inStock: 'In Stock',
       outOfStock: 'Out of Stock',
       none: 'No products yet',
+      save: 'Save',
+      update: 'Update',
       messages: {
         loadFailed: 'Failed to load products',
         saveSuccess: 'Product saved successfully!',

@@ -75,33 +75,40 @@ export default function ShopPage() {
   const products = productsData?.products || [];
 
   const addToCart = (product: Product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        if (existing.quantity >= (product.stock ?? 0)) {
-          toast({
-            title: t('shop.messages.maxStock'),
-            description: t('shop.messages.maxStockDesc', { count: product.stock }),
-            variant: 'destructive',
-          });
-          return prev;
-        }
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+    const existing = cart.find(item => item.id === product.id);
+    
+    if (existing) {
+      if (existing.quantity >= (product.stock ?? 0)) {
+        toast({
+          title: t('shop.messages.maxStock'),
+          description: t('shop.messages.maxStockDesc', { count: product.stock }),
+          variant: 'destructive',
+        });
+        return;
       }
+    } else {
       if ((product.stock ?? 0) <= 0) {
         toast({
           title: t('shop.messages.outOfStock'),
           description: t('shop.messages.outOfStockDesc'),
           variant: 'destructive',
         });
-        return prev;
+        return;
+      }
+    }
+
+    setCart(prev => {
+      const isExisting = prev.find(item => item.id === product.id);
+      if (isExisting) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
       return [...prev, { ...product, quantity: 1 }];
     });
+
     toast({
       title: t('shop.messages.addedToCart'),
       description: t('shop.messages.addedToCartDesc', { name: product.name }),

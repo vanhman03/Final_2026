@@ -595,6 +595,8 @@ export const vi = {
       inStock: 'Còn hàng',
       outOfStock: 'Hết hàng',
       none: 'Chưa có sản phẩm nào',
+      save: 'Lưu sản phẩm',
+      update: 'Cập nhật',
       messages: {
         loadFailed: 'Không thể tải sản phẩm',
         saveSuccess: 'Đã lưu sản phẩm thành công!',

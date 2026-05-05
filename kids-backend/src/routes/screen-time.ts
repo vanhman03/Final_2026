@@ -297,5 +297,31 @@ router.get('/active', authenticateUser, async (req: Request, res: Response) => {
         return errorResponse(res, message, 500);
     }
 });
+/**
+ * @swagger
+ * /api/screen-time/heartbeat:
+ * post:
+ * summary: Update usage and check limits
+ * tags: [Screen Time]
+ */
+router.post('/heartbeat', authenticateUser, async (req: Request, res: Response) => {
+    try {
+        const { child_id, increment_seconds } = req.body;
 
+        // Gọi RPC function trong Postgres để vừa update vừa check limit
+        const { data, error } = await supabase.rpc('update_and_check_limit', {
+            p_child_id: child_id,
+            p_increment: increment_seconds
+        });
+
+        if (error) throw error;
+
+        return successResponse(res, 'Heartbeat processed', {
+            locked: data.is_locked,
+            remaining_seconds: data.remaining_seconds
+        });
+    } catch (error: any) {
+        return errorResponse(res, error.message, 500);
+    }
+});
 export default router;

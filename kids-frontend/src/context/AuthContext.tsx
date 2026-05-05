@@ -122,7 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (newTotal >= latestLimit) {
           alert(i18n.t('parent.messages.limitReachedAlt'));
-          logout();
+          await logout();
+          window.location.href = '/login';
         }
       } catch (err) {
         console.error("Error updating screen time:", err);

@@ -30,6 +30,12 @@ export const screenTimeApi = {
         return api.get<ScreenTimeLog[]>(`/api/screen-time?${params}`);
     },
 
+    sendHeartbeat: (profileId: string, increment: number) => 
+    api.post<{ locked: boolean; remaining_seconds: number }>('/api/screen-time/heartbeat', {
+        profile_id: profileId,
+        increment_seconds: increment,
+    }),
+
     getSummary: (childId: string, period: Period = 'today') =>
         api.get<ScreenTimeSummary>(`/api/screen-time/summary?child_id=${childId}&period=${period}`),
 

@@ -91,7 +91,6 @@ export default function RegisterPage() {
       await register(email, password, name, pin);
       toast({
         title: t('auth.messages.registerSuccess'),
-        description: t('auth.messages.registerSuccess'),
       });
     } catch (error: any) {
       console.error('Registration error:', error);

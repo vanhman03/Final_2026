@@ -30,12 +30,18 @@ CREATE TABLE public.profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   display_name TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  points INTEGER DEFAULT 0,
+  badges TEXT[] DEFAULT '{}',
+  screen_time_limit INTEGER DEFAULT 3600,
+  pin_hash TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own profiles"
+ON public.profiles FOR ALL
+USING (auth.uid() = user_id);
 
 -- Children table (linked to parent)
 CREATE TABLE public.children (
@@ -290,8 +296,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (user_id, display_name)
-  VALUES (new.id, new.raw_user_meta_data ->> 'display_name');
+  INSERT INTO public.profiles (user_id, display_name, pin_hash)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data ->> 'display_name',
+    new.raw_user_meta_data ->> 'pin_hash'
+  );
   
   INSERT INTO public.user_roles (user_id, role)
   VALUES (new.id, COALESCE((new.raw_user_meta_data ->> 'role')::app_role, 'parent'));

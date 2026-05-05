@@ -24,6 +24,8 @@ import ResetPinPage from "./pages/auth/ResetPinPage";
 import BadgesPage from "./pages/BadgesPage";
 import NotFound from "./pages/NotFound";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -40,27 +42,30 @@ const App = () => (
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/reset-pin" element={<ResetPinPage />} />
 
-              {/* Main Parent UI (former child routes) */}
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/videos" element={<VideoLibraryPage />} />
-              <Route path="/favorites" element={<FavoritesPage />} />
-              <Route path="/games" element={<GamesPage />} />
-              <Route path="/games/color-match" element={<ColorMatchGame />} />
-              <Route path="/games/puzzle" element={<PuzzleGame />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                {/* Main Parent UI (former child routes) */}
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/videos" element={<VideoLibraryPage />} />
+                <Route path="/favorites" element={<FavoritesPage />} />
+                <Route path="/games" element={<GamesPage />} />
+                <Route path="/games/color-match" element={<ColorMatchGame />} />
+                <Route path="/games/puzzle" element={<PuzzleGame />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
 
-              {/* Parent Mode (PIN protected) */}
-              <Route path="/parent-mode" element={<ParentModePage />} />
+                {/* Parent Mode (PIN protected) */}
+                <Route path="/parent-mode" element={<ParentModePage />} />
 
-              {/* Badges Page */}
-              <Route path="/badges" element={<BadgesPage />} />
+                {/* Badges Page */}
+                <Route path="/badges" element={<BadgesPage />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                {/* Admin Routes */}
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-              {/* Shop */}
-              <Route path="/shop" element={<ShopPage />} />
-              <Route path="/payment/result" element={<PaymentResultPage />} />
+                {/* Shop */}
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/payment/result" element={<PaymentResultPage />} />
+              </Route>
 
               <Route path="*" element={<NotFound />} />
             </Routes>

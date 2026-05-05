@@ -50,13 +50,15 @@ export default function LoginPage() {
       await login(email, password);
       toast({
         title: t('auth.messages.loginSuccess'),
-        description: t('auth.messages.loginSuccess'), // Alternatively use different description if available
       });
     } catch (error: any) {
       console.error('Login error:', error);
+      const isInvalidCredentials = error.message?.includes('Invalid login credentials');
       toast({
         title: t('auth.messages.loginFailed'),
-        description: error.message || t('auth.messages.loginFailed'),
+        description: isInvalidCredentials 
+          ? "You have entered the wrong password." 
+          : (error.message || t('auth.messages.loginFailed')),
         variant: 'destructive',
       });
     } finally {
